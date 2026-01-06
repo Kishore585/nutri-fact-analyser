@@ -1,0 +1,7 @@
+{
+  "name": " NutriScan AI",
+  "description": "Your intelligent nutrition assistant that demystifies food labels based on your unique health profile.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
