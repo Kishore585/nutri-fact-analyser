@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ImageUploaderProps {
@@ -23,11 +23,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -40,65 +36,76 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-      
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 mb-2">Scan Food Label</h2>
-        <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-           <span>Analyzing for:</span>
-           <span className={`px-2 py-0.5 rounded-md font-medium text-slate-700 bg-slate-100 border border-slate-200`}>
-             {selectedProfile.name}
-           </span>
-        </div>
-      </div>
-
-      <div 
-        className={`relative flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-3xl transition-all duration-300 ${
-          dragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-white hover:bg-slate-50'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        {loading ? (
-          <div className="flex flex-col items-center animate-pulse">
-            <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
-            <h3 className="text-lg font-semibold text-slate-800">Analyzing...</h3>
-            <p className="text-slate-500 text-sm mt-2">Checking your health requirements</p>
-          </div>
-        ) : (
-          <>
-            <div className="p-4 rounded-full bg-slate-100 mb-4 group-hover:scale-110 transition-transform">
-               <Camera className="w-8 h-8 text-slate-600" />
+    <div className="w-full max-w-6xl mx-auto px-4 animate-fade-in">
+      <div className="relative overflow-hidden rounded-[3.5rem] shadow-2xl border border-white/60 min-h-[600px] flex flex-col md:flex-row items-stretch">
+        
+        {/* Left Side: Visual Hero */}
+        <div className="relative w-full md:w-1/2 min-h-[300px] md:min-h-full">
+          <img 
+            src="https://images.unsplash.com/photo-1542362567-b05e50029d2f?auto=format&fit=crop&q=80&w=2000" 
+            className="absolute inset-0 w-full h-full object-cover" 
+            alt="Nature"
+          />
+          <div className="absolute inset-0 hero-gradient"></div>
+          <div className="absolute bottom-12 left-12 right-12 text-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-emerald-500 w-3 h-3 rounded-full animate-pulse"></div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em]">System Online</span>
             </div>
-            <p className="text-lg font-medium text-slate-800 mb-2">
-              Tap to Take Photo
-            </p>
-            <p className="text-sm text-slate-400 mb-6 max-w-xs text-center">
-              Upload Nutrition Facts or Ingredients list for instant analysis.
-            </p>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+            <h2 className="text-4xl font-black tracking-tighter leading-none mb-4">Healthy vision,<br/>precise data.</h2>
+            {/* Corrected model reference to Gemini 3 Pro */}
+            <p className="text-white/70 text-sm font-medium">Powered by Gemini 3 Pro.</p>
+          </div>
+        </div>
+
+        {/* Right Side: Interaction */}
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center bg-white/30 backdrop-blur-3xl">
+          <div className="max-w-md mx-auto w-full text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 glass rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-8">
+              <Sparkles className="w-3 h-3" /> Nutritional Intelligence
+            </div>
+            
+            <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight mb-6">
+              Analyzing for <br/><span className="text-indigo-600 underline decoration-indigo-200">{selectedProfile.name}</span>
+            </h1>
+
+            <div 
+              className={`glass p-2 rounded-[2.5rem] transition-all duration-500 group ${
+                dragActive ? 'scale-105 shadow-2xl ring-4 ring-indigo-500/10' : ''
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
             >
-              Select Image
-            </button>
-            <input 
-              ref={fileInputRef}
-              type="file" 
-              accept="image/*" 
-              onChange={handleFileChange}
-              className="hidden" 
-            />
-          </>
-        )}
-      </div>
-      
-      <div className="mt-8 flex gap-4 justify-center">
-         <div className="flex items-center gap-2 text-slate-400 text-xs">
-             <ImageIcon className="w-3 h-3" /> Supports JPG, PNG, WEBP
-         </div>
+              <div className="bg-white/50 border border-white border-dashed rounded-[2.25rem] p-12 flex flex-col items-center">
+                {loading ? (
+                  <div className="flex flex-col items-center py-6">
+                    <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mb-4" />
+                    <p className="text-slate-500 font-bold text-sm">Deconstructing label...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-20 h-20 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-500/30 flex items-center justify-center text-white mb-8 transition-transform group-hover:scale-110">
+                       <Camera className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 mb-2">Upload Photo</h3>
+                    <p className="text-slate-400 text-xs font-medium mb-8 max-w-[180px]">
+                      Take a photo of the ingredients list on your food pack.
+                    </p>
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-xl hover:bg-black transition-all active:scale-95"
+                    >
+                      Choose Image
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

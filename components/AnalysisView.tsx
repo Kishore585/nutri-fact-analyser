@@ -1,48 +1,50 @@
+
 import React, { useState } from 'react';
 import { ScanResult, SafetyStatus, IngredientAnalysis } from '../types';
-import { CheckCircle, AlertTriangle, XCircle, ChevronDown, ChevronUp, RefreshCw, Info } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, ChevronDown, ChevronUp, RefreshCw, Info, FileText, Share2 } from 'lucide-react';
 
 interface AnalysisViewProps {
   result: ScanResult;
   onReset: () => void;
+  onViewReport: () => void;
   userProfileName: string;
 }
 
-const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, userProfileName }) => {
+const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, onViewReport, userProfileName }) => {
   
   const getVerdictStyles = (status: SafetyStatus) => {
     switch (status) {
       case SafetyStatus.SAFE:
         return {
-          bg: 'bg-emerald-50',
-          border: 'border-emerald-200',
-          text: 'text-emerald-800',
-          icon: <CheckCircle className="w-12 h-12 text-emerald-500" />,
-          label: 'Safe to Eat'
+          gradient: 'from-emerald-400 to-teal-500',
+          shadow: 'shadow-emerald-200',
+          text: 'text-emerald-900',
+          icon: <CheckCircle className="w-20 h-20 text-white" />,
+          label: 'Health Grade: A'
         };
       case SafetyStatus.CAUTION:
         return {
-          bg: 'bg-amber-50',
-          border: 'border-amber-200',
-          text: 'text-amber-800',
-          icon: <AlertTriangle className="w-12 h-12 text-amber-500" />,
-          label: 'Consume with Caution'
+          gradient: 'from-amber-400 to-orange-500',
+          shadow: 'shadow-amber-200',
+          text: 'text-amber-900',
+          icon: <AlertTriangle className="w-20 h-20 text-white" />,
+          label: 'Moderate Risk'
         };
       case SafetyStatus.UNSAFE:
         return {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          text: 'text-red-800',
-          icon: <XCircle className="w-12 h-12 text-red-500" />,
-          label: 'Avoid This Item'
+          gradient: 'from-rose-500 to-red-600',
+          shadow: 'shadow-red-200',
+          text: 'text-red-900',
+          icon: <XCircle className="w-20 h-20 text-white" />,
+          label: 'Danger Zone'
         };
       default:
         return {
-          bg: 'bg-slate-50',
-          border: 'border-slate-200',
-          text: 'text-slate-800',
-          icon: <Info className="w-12 h-12 text-slate-500" />,
-          label: 'Unknown Status'
+          gradient: 'from-slate-400 to-slate-500',
+          shadow: 'shadow-slate-200',
+          text: 'text-slate-900',
+          icon: <Info className="w-20 h-20 text-white" />,
+          label: 'Inconclusive'
         };
     }
   };
@@ -50,50 +52,75 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, userProfil
   const styles = getVerdictStyles(result.verdict);
 
   return (
-    <div className="w-full max-w-3xl mx-auto pb-20 animate-fade-in-up">
-      {/* Verdict Card */}
-      <div className={`rounded-3xl p-8 mb-8 text-center border-2 ${styles.bg} ${styles.border}`}>
-        <div className="flex justify-center mb-4">{styles.icon}</div>
-        <h2 className={`text-4xl font-bold mb-2 ${styles.text}`}>{styles.label}</h2>
-        <p className="text-slate-600 font-medium">For your {userProfileName} profile</p>
-      </div>
+    <div className="w-full max-w-7xl mx-auto px-4 pb-20 animate-fade-in">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Column: Big Gauge Card (Inspired by bottom-left circular chart) */}
+        <div className="lg:col-span-4 space-y-8">
+          <div className="glass p-12 rounded-[4rem] text-center flex flex-col items-center">
+            <div className="relative mb-10">
+              <div className={`w-52 h-52 rounded-full bg-gradient-to-br ${styles.gradient} shadow-2xl ${styles.shadow} flex items-center justify-center relative z-10`}>
+                <div className="absolute inset-2 border-4 border-white/20 rounded-full"></div>
+                {styles.icon}
+              </div>
+              <div className="absolute inset-0 bg-white blur-3xl opacity-20 -z-10 animate-pulse"></div>
+            </div>
+            
+            <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tighter">{styles.label}</h2>
+            <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] mb-10">{userProfileName} PROFILE</p>
+            
+            <div className="flex gap-4 w-full">
+              <button onClick={onReset} className="flex-1 glass p-4 rounded-3xl hover:bg-white transition-all text-slate-600 flex justify-center active:scale-95">
+                <RefreshCw className="w-6 h-6" />
+              </button>
+              <button className="flex-1 glass p-4 rounded-3xl hover:bg-white transition-all text-slate-600 flex justify-center active:scale-95">
+                <Share2 className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
 
-      {/* Summary */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
-        <h3 className="text-lg font-bold text-slate-800 mb-3">Analysis Summary</h3>
-        <p className="text-slate-600 leading-relaxed mb-4">
-          {result.summary}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {result.nutritionalHighlights.map((highlight, idx) => (
-             <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg">
-               {highlight}
-             </span>
-          ))}
+          <div className="glass p-8 rounded-[3rem]">
+             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Observations</h4>
+             <div className="space-y-3">
+                {result.nutritionalHighlights.map((h, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white/50 p-3 rounded-2xl border border-white">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                    <span className="text-xs font-bold text-slate-700">{h}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
         </div>
-      </div>
 
-      {/* Ingredients Breakdown */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800">Ingredient Breakdown</h3>
-        </div>
-        <div>
-          {result.ingredients.map((ing, index) => (
-            <IngredientRow key={index} ingredient={ing} />
-          ))}
-        </div>
-      </div>
+        {/* Right Column: Executive summary & Ingredients (Inspired by dashboard item list) */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="glass p-12 rounded-[4rem]">
+            <div className="flex items-center justify-between mb-10">
+              <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Analysis Brief</h3>
+              <button onClick={onViewReport} className="glass px-6 py-3 rounded-2xl text-xs font-black text-indigo-600 uppercase tracking-widest hover:bg-white transition-all">
+                Full Report
+              </button>
+            </div>
+            <p className="text-slate-600 text-xl font-medium leading-relaxed italic border-l-4 border-indigo-400 pl-8 py-2">
+              "{result.summary}"
+            </p>
+          </div>
 
-      {/* Floating Action Button for Mobile / Sticky Button */}
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center z-10 px-4">
-        <button
-          onClick={onReset}
-          className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl hover:bg-slate-800 hover:scale-105 transition-all font-semibold"
-        >
-          <RefreshCw className="w-5 h-5" />
-          Scan Another Label
-        </button>
+          <div className="glass rounded-[4rem] overflow-hidden">
+            <div className="p-10 border-b border-white flex items-center justify-between">
+                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Ingredient Composition</h3>
+                <span className="bg-slate-900 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
+                  {result.ingredients.length} items
+                </span>
+            </div>
+            <div className="divide-y divide-white">
+              {result.ingredients.map((ing, index) => (
+                <IngredientRow key={index} ingredient={ing} />
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -102,40 +129,47 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, userProfil
 const IngredientRow: React.FC<{ ingredient: IngredientAnalysis }> = ({ ingredient }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const getStatusColor = (s: SafetyStatus) => {
+  const getStatusBadge = (s: SafetyStatus) => {
     switch (s) {
-      case SafetyStatus.SAFE: return 'bg-emerald-100 text-emerald-700';
-      case SafetyStatus.CAUTION: return 'bg-amber-100 text-amber-700';
-      case SafetyStatus.UNSAFE: return 'bg-red-100 text-red-700';
-      default: return 'bg-slate-100 text-slate-700';
+      case SafetyStatus.SAFE: return 'text-emerald-600 bg-emerald-100/50 border-emerald-100';
+      case SafetyStatus.CAUTION: return 'text-amber-600 bg-amber-100/50 border-amber-100';
+      case SafetyStatus.UNSAFE: return 'text-rose-600 bg-rose-100/50 border-rose-100';
+      default: return 'text-slate-400 bg-slate-100/50 border-slate-100';
     }
   };
 
   return (
-    <div className={`border-b border-slate-50 last:border-0 transition-colors ${expanded ? 'bg-slate-50' : 'bg-white'}`}>
-      <div 
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50"
-      >
+    <div className={`transition-all duration-300 ${expanded ? 'bg-white/40' : 'hover:bg-white/20'}`}>
+      <div onClick={() => setExpanded(!expanded)} className="flex items-center justify-between p-8 cursor-pointer">
         <div className="flex flex-col">
-          <span className="font-semibold text-slate-800">{ingredient.commonName}</span>
-          <span className="text-xs text-slate-400">{ingredient.name}</span>
+          <span className="text-xl font-bold text-slate-900 tracking-tighter">{ingredient.commonName}</span>
+          <span className="text-[10px] text-slate-400 font-mono italic uppercase tracking-widest">{ingredient.name}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusColor(ingredient.status)}`}>
+        <div className="flex items-center gap-6">
+          <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black border uppercase tracking-tighter ${getStatusBadge(ingredient.status)}`}>
             {ingredient.status}
           </span>
-          {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          <div className={`w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform ${expanded ? 'rotate-180' : ''}`}>
+            <ChevronDown className="w-5 h-5 text-slate-400" />
+          </div>
         </div>
       </div>
       
       {expanded && (
-        <div className="px-4 pb-4 text-sm animate-fade-in">
-           <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-sm">
-              <p className="text-slate-600 mb-2"><strong>What is it?</strong> {ingredient.description}</p>
-              <p className={`${ingredient.status === SafetyStatus.SAFE ? 'text-emerald-700' : ingredient.status === SafetyStatus.UNSAFE ? 'text-red-700' : 'text-amber-700'}`}>
-                <strong>Why it matters:</strong> {ingredient.reason}
-              </p>
+        <div className="px-8 pb-10 animate-fade-in">
+           <div className="p-8 bg-white/60 rounded-[2.5rem] border border-white shadow-sm">
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">About</label>
+                  <p className="text-slate-700 font-medium text-sm leading-relaxed">{ingredient.description}</p>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Rationale</label>
+                  <p className={`font-bold text-sm leading-relaxed ${ingredient.status === SafetyStatus.SAFE ? 'text-emerald-700' : ingredient.status === SafetyStatus.UNSAFE ? 'text-rose-700' : 'text-amber-700'}`}>
+                     {ingredient.reason}
+                  </p>
+                </div>
+              </div>
            </div>
         </div>
       )}

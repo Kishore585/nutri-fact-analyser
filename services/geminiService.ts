@@ -1,31 +1,9 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScanResult, SafetyStatus } from "../types";
 
-// Robust API Key detection for different environments (Node, Vite, Webpack)
-const getApiKey = (): string => {
-  // 1. Check for standard process.env (Node/Webpack/CRA)
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    return process.env.API_KEY;
-  }
-  
-  // 2. Check for Vite environment variables (Standard for Vercel/Netlify React deployments)
-  // @ts-ignore - import.meta is a valid ES property but TS might complain depending on config
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    // @ts-ignore
-    if (import.meta.env.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
-    // @ts-ignore
-    if (import.meta.env.API_KEY) return import.meta.env.API_KEY;
-  }
-
-  return '';
-};
-
-const API_KEY = getApiKey();
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-// Helper to convert File to Base64
+/**
+ * Helper to convert File to Base64 data part for Gemini API.
+ */
 export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { data: string; mimeType: string } }> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,7 +21,14 @@ export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { 
   });
 };
 
+/**
+ * Analyzes a food label image using Gemini 3 Pro for advanced reasoning.
+ * Strictly adheres to Google GenAI SDK guidelines regarding API Key and model selection.
+ */
 export const analyzeImage = async (imageFile: File, baseProfileContext: string, customConditions?: string): Promise<ScanResult> => {
+  // Always create a new instance right before making an API call to ensure it uses the most up-to-date API key.
+  // The API key is obtained exclusively from process.env.API_KEY.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const imagePart = await fileToGenerativePart(imageFile);
 
   const prompt = `
@@ -64,8 +49,9 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
   `;
 
   try {
+    // Using gemini-3-pro-preview for complex reasoning tasks involving multimodal input and strict logical constraints.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: {
         parts: [imagePart, { text: prompt }],
       },
@@ -111,13 +97,14 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
       }
     });
 
+    // Extracting text directly from the response object as a property.
     const text = response.text;
     if (!text) throw new Error("No response from AI");
     
-    return JSON.parse(text) as ScanResult;
+    return JSON.parse(text.trim()) as ScanResult;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
-    throw new Error("Failed to analyze image. Please try again.");
+    throw new Error(error.message || "Failed to analyze image. Please try again.");
   }
 };

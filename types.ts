@@ -50,4 +50,4 @@ export interface UserProfile {
   promptContext: string;
 }
 
-export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'HISTORY' | 'ARCHITECTURE';
+export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'HISTORY' | 'ARCHITECTURE' | 'REPORT' | 'PROJECT_DOC';

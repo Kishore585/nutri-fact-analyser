@@ -1,81 +1,110 @@
 
+import { db, storage } from './firebase';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  limit, 
+  getDocs,
+  deleteDoc,
+  Timestamp 
+} from "firebase/firestore";
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from "firebase/storage";
 import { HistoryItem, User, ScanResult, UserProfile } from '../types';
 
-const USER_KEY = 'nutriscan_user';
-const HISTORY_PREFIX = 'nutriscan_history_';
-
-// Simple ID generator fallback if crypto is unavailable
-const generateId = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-};
-
 export const storageService = {
-  // --- Auth ---
-  login: (email: string, name?: string): User => {
-    // Check if user exists first to preserve preferences
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) {
-      const existingUser = JSON.parse(stored);
-      if (existingUser.email === email) {
-        return existingUser;
+  // --- User Profiles ---
+  async syncUser(user: User): Promise<User> {
+    const userRef = doc(db, 'users', user.id);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const firestoreData = userSnap.data();
+      return { ...user, ...firestoreData } as User;
+    } else {
+      await setDoc(userRef, user);
+      return user;
+    }
+  },
+
+  async updateUserPreferences(userId: string, preferences: any) {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { preferences }, { merge: true });
+  },
+
+  // --- Scan History & Image Storage ---
+  async saveScan(userId: string, result: ScanResult, profile: UserProfile, imageFile?: File): Promise<void> {
+    const historyRef = collection(db, 'users', userId, 'scans');
+    let imageUrl = null;
+
+    // 1. Upload image to Firebase Storage if provided
+    if (imageFile) {
+      const filename = `scans/${userId}/${Date.now()}-${imageFile.name}`;
+      const imageRef = ref(storage, filename);
+      await uploadBytes(imageRef, imageFile);
+      imageUrl = await getDownloadURL(imageRef);
+    }
+    
+    // 2. Save metadata and results to Firestore
+    const newItem = {
+      ...result,
+      imageUrl, // Store the public link to the image
+      timestamp: Date.now(),
+      profileId: profile.id,
+      profileName: profile.name,
+      createdAt: Timestamp.now()
+    };
+
+    await addDoc(historyRef, newItem);
+  },
+
+  async deleteScan(userId: string, scanId: string): Promise<void> {
+    // 1. Get the scan data to check for an associated image
+    const scanRef = doc(db, 'users', userId, 'scans', scanId);
+    const scanSnap = await getDoc(scanRef);
+    
+    if (scanSnap.exists()) {
+      const data = scanSnap.data();
+      // 2. If there's an image URL, attempt to delete from Storage
+      if (data.imageUrl) {
+        try {
+          // Extract the path from the URL or recreate it (simplified for this app)
+          const imageRef = ref(storage, data.imageUrl);
+          await deleteObject(imageRef);
+        } catch (e) {
+          console.warn("Could not delete image from Storage:", e);
+        }
       }
     }
 
-    // New User
-    const user: User = {
-      id: btoa(email),
-      email,
-      name: name || email.split('@')[0],
-      avatar: `https://ui-avatars.com/api/?name=${name || email}&background=10b981&color=fff`
-    };
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    return user;
+    // 3. Delete the Firestore document
+    await deleteDoc(scanRef);
   },
 
-  updateUser: (user: User) => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  },
-
-  logout: () => {
-    localStorage.removeItem(USER_KEY);
-  },
-
-  getCurrentUser: (): User | null => {
-    const stored = localStorage.getItem(USER_KEY);
-    return stored ? JSON.parse(stored) : null;
-  },
-
-  // --- History ---
-  saveScan: (user: User, result: ScanResult, profile: UserProfile) => {
-    const key = `${HISTORY_PREFIX}${user.id}`;
-    const currentHistoryStr = localStorage.getItem(key);
-    const history: HistoryItem[] = currentHistoryStr ? JSON.parse(currentHistoryStr) : [];
-
-    const newItem: HistoryItem = {
-      ...result,
-      id: generateId(),
-      timestamp: Date.now(),
-      profileId: profile.id,
-      profileName: profile.name
-    };
-
-    // Add to beginning
-    const updatedHistory = [newItem, ...history];
+  async getHistory(userId: string): Promise<HistoryItem[]> {
+    const historyRef = collection(db, 'users', userId, 'scans');
+    const q = query(historyRef, orderBy('createdAt', 'desc'), limit(50));
     
-    // Limit to last 50 items to prevent storage issues
-    if (updatedHistory.length > 50) {
-        updatedHistory.length = 50;
-    }
-
-    localStorage.setItem(key, JSON.stringify(updatedHistory));
-  },
-
-  getHistory: (user: User): HistoryItem[] => {
-    const key = `${HISTORY_PREFIX}${user.id}`;
-    const str = localStorage.getItem(key);
-    return str ? JSON.parse(str) : [];
+    const querySnapshot = await getDocs(q);
+    const items: HistoryItem[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      items.push({
+        id: doc.id,
+        ...data
+      } as HistoryItem);
+    });
+    
+    return items;
   }
 };
