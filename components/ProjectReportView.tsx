@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowLeft, BookOpen, Cpu, ShieldCheck, Globe, Database, Code, Printer } from 'lucide-react';
 
@@ -45,11 +44,11 @@ const ProjectReportView: React.FC<ProjectReportViewProps> = ({ onBack }) => {
               An intelligent nutrition assistant leveraging multimodal Large Language Models for personalized dietary analysis.
             </p>
             <div className="mt-10 flex items-center justify-center gap-6 text-sm font-mono text-slate-400">
-              <span>VERSION 1.0.0</span>
+              <span>VERSION 1.1.0</span>
               <span>•</span>
-              <span>EST. 2024</span>
+              <span>EST. 2025</span>
               <span>•</span>
-              <span>SYSTEMS ARCHITECTURE</span>
+              <span>LOCAL-FIRST PERSISTENCE</span>
             </div>
           </div>
 
@@ -61,7 +60,7 @@ const ProjectReportView: React.FC<ProjectReportViewProps> = ({ onBack }) => {
                 <Globe className="w-4 h-4" /> 01. Executive Summary
               </h2>
               <div className="prose prose-slate text-slate-600 leading-relaxed">
-                NutriScan AI addresses the critical gap between complex food labeling and consumer safety. In an era where "hidden sugars" and cryptic additives are standard, this application uses Google's Gemini AI to provide real-time, context-aware ingredient analysis tailored to individual health profiles such as Celiac disease, Diabetes, and specific food allergies.
+                NutriScan AI addresses the critical gap between complex food labeling and consumer safety. The application uses Google's Gemini 3 Pro AI to provide real-time, context-aware ingredient analysis tailored to individual health profiles.
               </div>
             </section>
 
@@ -70,8 +69,7 @@ const ProjectReportView: React.FC<ProjectReportViewProps> = ({ onBack }) => {
                 <Cpu className="w-4 h-4" /> 02. AI Methodology
               </h2>
               <div className="prose prose-slate text-slate-600 leading-relaxed">
-                {/* Updated model name to gemini-3-pro-preview to match the complexity of the task */}
-                The core intelligence utilizes the <strong>gemini-3-pro-preview</strong> model. Unlike traditional OCR which simply extracts text, NutriScan performs <strong>multimodal semantic analysis</strong>. It recognizes the visual structure of a label and cross-references identified ingredients against a database of health implications, strictly adhering to user-defined "custom conditions."
+                The core intelligence utilizes the <strong>gemini-3-pro-preview</strong> model. NutriScan performs <strong>multimodal semantic analysis</strong>, recognizing visual label structures and cross-referencing ingredients against a health implication knowledge base.
               </div>
             </section>
 
@@ -80,23 +78,22 @@ const ProjectReportView: React.FC<ProjectReportViewProps> = ({ onBack }) => {
                 <Code className="w-4 h-4" /> 03. Technical Implementation
               </h2>
               <div className="prose prose-slate text-slate-600 leading-relaxed">
-                The system is architected as a modern Single Page Application (SPA):
+                The system is architected as a privacy-centric SPA:
                 <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li><strong>React 19:</strong> Utilizing the latest concurrent rendering features.</li>
-                  <li><strong>TypeScript:</strong> For strict type-safety across the analysis engine.</li>
-                  <li><strong>Tailwind CSS:</strong> A utility-first design system for a responsive UI.</li>
-                  <li><strong>Firebase:</strong> Providing secure authentication, cloud storage, and database persistence.</li>
+                  <li><strong>React 19:</strong> Utilizing concurrent rendering for fluid UI.</li>
+                  <li><strong>TypeScript:</strong> Type-safety for logical analysis engine.</li>
+                  <li><strong>Tailwind CSS:</strong> Highly responsive utility-first design.</li>
+                  <li><strong>LocalStorage:</strong> For non-cloud persistent health profiles.</li>
                 </ul>
               </div>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-sm font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                <Database className="w-4 h-4" /> 04. Data Persistence
+                <Database className="w-4 h-4" /> 04. Data Sovereignty
               </h2>
               <div className="prose prose-slate text-slate-600 leading-relaxed">
-                {/* Corrected persistence info to match Firebase implementation */}
-                Privacy and data integrity are ensured via <strong>Firebase Cloud Infrastructure</strong>. User health profiles, encrypted scan histories, and analyzed images are securely stored in Firestore and Cloud Storage, allowing for seamless synchronization across devices while keeping personal health data protected.
+                Privacy is handled by keeping data on the edge. By removing third-party database dependencies (Firebase), user history and preferences remain entirely within the user's browser environment, providing absolute data sovereignty.
               </div>
             </section>
 
@@ -104,29 +101,21 @@ const ProjectReportView: React.FC<ProjectReportViewProps> = ({ onBack }) => {
 
           {/* Full Width Section */}
           <div className="mt-16 bg-slate-50 p-8 rounded-3xl border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Functional Use Cases</h2>
+            <h2 className="text-lg font-bold text-slate-900 mb-4">Functional Capabilities</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div className="bg-white p-4 rounded-xl shadow-sm">
-                    <h4 className="font-bold text-slate-800 text-sm mb-1">OCR Processing</h4>
-                    <p className="text-xs text-slate-500">Multimodal extraction of raw ingredient text from complex label images.</p>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">OCR Analysis</h4>
+                    <p className="text-xs text-slate-500">Multimodal extraction from complex or low-light label images.</p>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm">
                     <h4 className="font-bold text-slate-800 text-sm mb-1">Safety Mapping</h4>
-                    <p className="text-xs text-slate-500">Dynamic mapping of ingredients to SafetyStatus based on medical constraints.</p>
+                    <p className="text-xs text-slate-500">Ingredient-to-Profile mapping based on medical constraints.</p>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm">
-                    <h4 className="font-bold text-slate-800 text-sm mb-1">Report Synthesis</h4>
-                    <p className="text-xs text-slate-500">Generating detailed nutritional analysis reports for medical or personal reference.</p>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">PDF Reporting</h4>
+                    <p className="text-xs text-slate-500">Automated synthesis of nutritional analysis reports for medical use.</p>
                 </div>
             </div>
-          </div>
-
-          {/* Footer Sign-off */}
-          <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col items-center">
-            <p className="text-slate-400 text-xs text-center max-w-md">
-                This project report was automatically generated by the NutriScan AI documentation engine. 
-                All system metrics and architectural details are accurate to build v1.0.
-            </p>
           </div>
         </div>
       </div>

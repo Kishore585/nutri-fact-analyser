@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile, AppState, ScanResult, User, HistoryItem } from './types';
 import ImageUploader from './components/ImageUploader';
@@ -11,10 +10,8 @@ import ProductReport from './components/ProductReport';
 import ProjectReportView from './components/ProjectReportView';
 import { analyzeImage } from './services/geminiService';
 import { storageService } from './services/storageService';
-import { auth } from './services/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { PROFILES } from './constants';
-import { ShieldCheck, History, LogOut, Settings, GitGraph, BookOpen, Loader2 } from 'lucide-react';
+import { ShieldCheck, History, LogOut, Settings, GitGraph, BookOpen, Loader2, User as UserIcon, Maximize, Minimize } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>('AUTH');
@@ -24,41 +21,59 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const getProfileObject = (id?: string) => PROFILES.find(p => p.id === id) || PROFILES[0];
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const baseUser: User = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${firebaseUser.email}&background=10b981&color=fff`
-        };
-        
-        const syncedUser = await storageService.syncUser(baseUser);
-        setUser(syncedUser);
-        
-        const cloudHistory = await storageService.getHistory(syncedUser.id);
-        setHistory(cloudHistory);
-        
-        setState(syncedUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
+    const initApp = async () => {
+      const localUser = await storageService.syncUser();
+      if (localUser) {
+        setUser(localUser);
+        const localHistory = await storageService.getHistory(localUser.id);
+        setHistory(localHistory);
+        setState(localUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
       } else {
-        setUser(null);
         setState('AUTH');
       }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    initApp();
+
+    const handleFsChange = () => setIsFullScreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  const handleLogin = async (userData: User) => {
+    const syncedUser = await storageService.syncUser(userData);
+    if (syncedUser) {
+      setUser(syncedUser);
+      const localHistory = await storageService.getHistory(syncedUser.id);
+      setHistory(localHistory);
+      setState(syncedUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
+    }
+  };
+
   const handleLogout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setResult(null);
-    setState('AUTH');
+    if (confirm("This will clear your local health profile and history. Continue?")) {
+      await storageService.clearAllData();
+      setUser(null);
+      setResult(null);
+      setHistory([]);
+      setState('AUTH');
+    }
   };
 
   const handleProfileUpdate = async (updatedUser: User) => {
@@ -84,14 +99,11 @@ const App: React.FC = () => {
     setError(null);
     const baseProfile = getProfileObject(user.preferences?.baseProfileId);
     try {
-      // 1. Analyze with Gemini
       const analysisData = await analyzeImage(file, baseProfile.promptContext, user.preferences?.customConditions);
       setResult(analysisData);
       
-      // 2. Save to Cloud Storage and Firestore
       await storageService.saveScan(user.id, analysisData, baseProfile, file);
       
-      // 3. Refresh History
       const updatedHistory = await storageService.getHistory(user.id);
       setHistory(updatedHistory);
       
@@ -122,7 +134,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans">
       <header className="px-6 pt-8 sticky top-0 z-50 print:hidden">
-        <div className="max-w-7xl mx-auto h-24 glass rounded-[2.5rem] px-10 flex items-center justify-between shadow-2xl">
+        <div className="max-w-[1600px] mx-auto h-24 glass rounded-[2.5rem] px-10 flex items-center justify-between shadow-2xl">
           <button 
             onClick={() => user ? reset() : null} 
             className="flex items-center gap-4 group disabled:opacity-50"
@@ -134,23 +146,35 @@ const App: React.FC = () => {
              <span className="font-black text-2xl tracking-tighter text-slate-900">NutriScan<span className="text-indigo-600">AI</span></span>
           </button>
           
-          {user && state !== 'AUTH' && (
-             <div className="flex items-center gap-2">
-                <button onClick={() => setState('HISTORY')} className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
-                    <History className="w-6 h-6" />
-                </button>
-                <button onClick={() => setState('PROFILE_EDITOR')} className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
-                    <Settings className="w-6 h-6" />
-                </button>
-                <div className="h-10 w-px bg-slate-200/60 mx-4"></div>
-                <div className="flex items-center gap-4">
-                    <img src={user.avatar} className="w-10 h-10 rounded-full border-2 border-white shadow-md hidden sm:block" alt="Avatar" />
-                    <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500 transition-colors p-2">
-                        <LogOut className="w-6 h-6" />
-                    </button>
-                </div>
-             </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleFullScreen} 
+              title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all"
+            >
+                {isFullScreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+            </button>
+
+            {user && state !== 'AUTH' && (
+               <>
+                  <button onClick={() => setState('HISTORY')} title="History" className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
+                      <History className="w-6 h-6" />
+                  </button>
+                  <button onClick={() => setState('PROFILE_EDITOR')} title="Settings" className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
+                      <Settings className="w-6 h-6" />
+                  </button>
+                  <div className="h-10 w-px bg-slate-200/60 mx-4"></div>
+                  <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border-2 border-white shadow-md text-indigo-600">
+                          <UserIcon className="w-6 h-6" />
+                      </div>
+                      <button onClick={handleLogout} title="Reset Data" className="text-slate-400 hover:text-rose-500 transition-colors p-2">
+                          <LogOut className="w-6 h-6" />
+                      </button>
+                  </div>
+               </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -162,7 +186,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {state === 'AUTH' && <AuthScreen onLogin={() => {}} />}
+        {state === 'AUTH' && <AuthScreen onLogin={handleLogin} />}
         {state === 'PROFILE_EDITOR' && user && <UserProfileEditor user={user} onSave={handleProfileUpdate} />}
         {state === 'UPLOAD' && user && <ImageUploader selectedProfile={activeProfile} onUpload={handleFileUpload} onBack={() => setState('PROFILE_EDITOR')} loading={scanning} />}
         {state === 'RESULTS' && result && <AnalysisView result={result} onViewReport={() => setState('REPORT')} userProfileName={(result as HistoryItem).profileName || activeProfile.name} onReset={reset} />}
@@ -182,7 +206,7 @@ const App: React.FC = () => {
                  <GitGraph className="w-5 h-5" /> Infrastructure
               </button>
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-60">© {new Date().getFullYear()} NutriScan AI • Cloud Verified</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-60">© {new Date().getFullYear()} NutriScan AI • Local Persistence</p>
         </div>
       </footer>
     </div>

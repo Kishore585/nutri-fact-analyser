@@ -1,83 +1,45 @@
-
 import React, { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
-import { GitGraph, ArrowLeft } from 'lucide-react';
+import { GitGraph, ArrowLeft, Layout } from 'lucide-react';
 
 interface ArchitectureViewProps {
   onBack: () => void;
 }
 
 const DIAGRAM_DEFINITION = `
-usecaseDiagram
-    actor "User" as U
-    actor "Google Gemini API" as AI
-    actor "Local Storage" as LS
+flowchart TD
+    U[User] --> UI[React Frontend]
+    UI --> LS[(LocalStorage)]
+    UI --> AI[Gemini 3 Pro API]
 
-    package "NutriScan AI System" {
-        
-        package "Authentication" {
-            usecase "Login / Sign Up" as UC1
-            usecase "Logout" as UC2
-        }
+    subgraph "Client Side (Local-First)"
+        UI
+        LS
+    end
 
-        package "Profile Management" {
-            usecase "Manage Health Profile" as UC3
-            usecase "Select Base Lifestyle" as UC3a
-            usecase "Define Custom Conditions" as UC3b
-        }
+    subgraph "External Logic"
+        AI
+    end
 
-        package "Analysis Engine" {
-            usecase "Scan Food Label" as UC4
-            usecase "Upload/Take Photo" as UC4a
-            usecase "Analyze Image" as UC5
-            usecase "View Safety Verdict" as UC6
-            usecase "View Ingredient Breakdown" as UC7
-        }
-
-        package "History System" {
-            usecase "View Scan History" as UC8
-            usecase "Load Past Result" as UC9
-        }
-    }
-
-    %% Relationships
-    U --> UC1
-    U --> UC2
-    UC1 ..> LS : read/write
-
-    U --> UC3
-    UC3 ..> UC3a : include
-    UC3 ..> UC3b : include
-    UC3 ..> LS : persist
-
-    U --> UC4
-    UC4 ..> UC4a : include
-    UC4 ..> UC5 : include
-    UC5 --> AI : send image + prompt
-    UC5 ..> LS : read profile
-    UC5 ..> LS : save result
-    U --> UC6
-    U --> UC7
-    UC6 ..> UC7 : extend
-
-    U --> UC8
-    UC8 --> UC9
-    UC8 ..> LS : read history
+    UI -- "1. Uploads Label" --> UI
+    UI -- "2. Reads Profile" --> LS
+    UI -- "3. Prompt + Image" --> AI
+    AI -- "4. JSON Analysis" --> UI
+    UI -- "5. Store History" --> LS
+    UI -- "6. Render Report" --> UI
 `;
 
 const ArchitectureView: React.FC<ArchitectureViewProps> = ({ onBack }) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initialize mermaid
     mermaid.initialize({ 
       startOnLoad: false, 
       theme: 'neutral',
-      fontFamily: 'Inter',
+      fontFamily: 'Plus Jakarta Sans',
       securityLevel: 'loose',
     });
 
-    // Render the diagram
     if (chartRef.current) {
         mermaid.run({
             nodes: [chartRef.current]
@@ -90,7 +52,7 @@ const ArchitectureView: React.FC<ArchitectureViewProps> = ({ onBack }) => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <GitGraph className="w-6 h-6 text-slate-400" />
-            System Architecture
+            System Infrastructure
         </h1>
         <button 
           onClick={onBack}
@@ -101,13 +63,17 @@ const ArchitectureView: React.FC<ArchitectureViewProps> = ({ onBack }) => {
       </div>
 
       <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-slate-50 p-4 border-b border-slate-100 mb-4">
-            <p className="text-sm text-slate-500">
-                This diagram illustrates the functional flow of NutriScan AI, showing how user actions interact with the Profile System, Gemini API, and Local Storage.
+        <div className="bg-slate-50 p-6 border-b border-slate-100 mb-4">
+            <div className="flex items-center gap-3 mb-2 text-indigo-600">
+                <Layout className="w-5 h-5" />
+                <h2 className="font-bold">Zero-Cloud Architecture</h2>
+            </div>
+            <p className="text-sm text-slate-500 leading-relaxed">
+                NutriScan AI is now 100% cloud-agnostic for user data. Personal health profiles and scan history are managed exclusively through the <strong>Web Storage API</strong> (LocalStorage), ensuring that sensitive data never leaves your browser's private storage.
             </p>
         </div>
-        <div className="overflow-x-auto flex justify-center p-4 bg-white min-h-[500px]">
-            <div className="mermaid" ref={chartRef}>
+        <div className="overflow-x-auto flex justify-center p-8 bg-white min-h-[400px]">
+            <div className="mermaid scale-125 origin-top" ref={chartRef}>
                 {DIAGRAM_DEFINITION}
             </div>
         </div>

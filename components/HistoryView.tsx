@@ -24,7 +24,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Delete this scan from your cloud history?')) {
+    if (confirm('Remove this scan from your local history?')) {
       setDeletingId(id);
       await onDelete(id);
       setDeletingId(null);
@@ -53,7 +53,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
             </div>
             <h3 className="text-lg font-black text-slate-900">No History Yet</h3>
             <p className="text-slate-500 max-w-xs mt-2 text-sm font-medium">
-                Your analyzed food labels will be securely synced here.
+                Your analyzed food labels will be stored locally on this device.
             </p>
             <button 
                 onClick={onBack}
@@ -64,6 +64,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ history, onSelect, onDelete, 
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="bg-slate-50 p-4 rounded-2xl text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+             Scans are kept on this device only
+          </div>
           {history.map((item) => (
             <div key={item.id} className="relative group">
               <button
