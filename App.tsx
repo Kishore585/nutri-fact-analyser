@@ -10,7 +10,6 @@ import AccountSettingsView from './components/AccountSettingsView';
 import ProductReport from './components/ProductReport';
 import { analyzeImage } from './services/geminiService';
 import { storageService } from './services/storageService';
-import { auth, onAuthStateChanged, signOut } from './services/firebase';
 import { PROFILES } from './constants';
 import { ShieldCheck, History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize } from 'lucide-react';
 
@@ -27,36 +26,26 @@ const App: React.FC = () => {
   const getProfileObject = (id?: string) => PROFILES.find(p => p.id === id) || PROFILES[0];
 
   useEffect(() => {
-    // Listen for Firebase Auth changes
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        const baseUser: User = {
-          id: fbUser.uid,
-          email: fbUser.email || '',
-          name: fbUser.displayName || 'User',
-          avatar: fbUser.photoURL || undefined
-        };
-        
-        const syncedUser = await storageService.syncUser(baseUser);
-        if (syncedUser) {
-          setUser(syncedUser);
-          const localHistory = await storageService.getHistory(syncedUser.id);
-          setHistory(localHistory);
-          setState(syncedUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
-        }
+    const initApp = async () => {
+      const storedUser = localStorage.getItem('nutriscan_user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser) as User;
+        setUser(parsedUser);
+        const localHistory = await storageService.getHistory(parsedUser.id);
+        setHistory(localHistory);
+        setState(parsedUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
       } else {
-        setUser(null);
-        setHistory([]);
         setState('AUTH');
       }
       setLoading(false);
-    });
+    };
+
+    initApp();
 
     const handleFsChange = () => setIsFullScreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFsChange);
     
     return () => {
-      unsubscribe();
       document.removeEventListener('fullscreenchange', handleFsChange);
     };
   }, []);
@@ -71,13 +60,22 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = (userData: User) => {
-    // Handled by onAuthStateChanged
+  const handleLogin = async (userData: User) => {
+    const syncedUser = await storageService.syncUser(userData);
+    if (syncedUser) {
+      setUser(syncedUser);
+      const localHistory = await storageService.getHistory(syncedUser.id);
+      setHistory(localHistory);
+      setState(syncedUser.preferences ? 'UPLOAD' : 'PROFILE_EDITOR');
+    }
   };
 
   const handleLogout = async () => {
-    if (confirm("Log out of your account? Your data will remain safely stored in the cloud.")) {
-      await signOut(auth);
+    if (confirm("Log out of your account? Your data will be cleared from this device.")) {
+      await storageService.clearAllData();
+      setUser(null);
+      setHistory([]);
+      setState('AUTH');
     }
   };
 
