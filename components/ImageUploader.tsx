@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { Camera, Image as ImageIcon, Loader2, Sparkles, MoveLeft } from 'lucide-react';
 import { UserProfile } from '../types';
@@ -34,22 +35,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
     }
   };
 
-  // Select hero image based on profile
-  const getHeroImage = () => {
-    if (selectedProfile.id === 'muscle') {
-      return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=2000";
-    }
-    return "https://images.unsplash.com/photo-1542362567-b05e50029d2f?auto=format&fit=crop&q=80&w=2000";
-  };
-
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto animate-fade-in">
       <div className="relative overflow-hidden rounded-[3.5rem] shadow-2xl border border-white/60 min-h-[650px] flex flex-col md:flex-row items-stretch">
         
         {/* Left Side: Visual Hero */}
         <div className="relative w-full md:w-1/2 min-h-[300px] md:min-h-full">
           <img 
-            src={getHeroImage()} 
+            src={selectedProfile.thumbnailUrl || "https://images.unsplash.com/photo-1542362567-b05e50029d2f?auto=format&fit=crop&q=80&w=2000"} 
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000" 
             alt={selectedProfile.name}
           />

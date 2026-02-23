@@ -25,22 +25,16 @@ export interface HistoryItem extends ScanResult {
   id: string;
   timestamp: number;
   profileId: string;
-  profileName: string; // Cached name in case profile def changes
+  profileName: string; 
 }
 
 export interface UserPreferences {
   baseProfileId: string;
-  customConditions: string; // Free text for allergies, specific diseases, etc.
+  customConditions: string;
+  theme?: 'indigo' | 'emerald' | 'slate' | 'rose';
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  preferences?: UserPreferences;
-}
-
+// Added missing UserProfile interface used for health goal profiles
 export interface UserProfile {
   id: string;
   name: string;
@@ -48,7 +42,18 @@ export interface UserProfile {
   icon: string;
   color: string;
   promptContext: string;
-  thumbnailUrl?: string;
+  thumbnailUrl: string;
 }
 
-export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'HISTORY' | 'ARCHITECTURE' | 'REPORT' | 'PROJECT_DOC';
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  password?: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'other' | 'prefer-not-to-say';
+  avatar?: string;
+  preferences?: UserPreferences;
+}
+
+export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'ACCOUNT_SETTINGS' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'HISTORY' | 'ARCHITECTURE' | 'REPORT' | 'PROJECT_DOC';

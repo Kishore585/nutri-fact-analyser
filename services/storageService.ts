@@ -1,70 +1,74 @@
-import { HistoryItem, User, ScanResult, UserProfile } from '../types';
 
-const USER_KEY = 'nutriscan_user';
-const HISTORY_KEY = 'nutriscan_history';
+import { HistoryItem, User, ScanResult, UserProfile } from '../types';
+import { db, doc, setDoc, getDoc, collection, query, orderBy, getDocs, deleteDoc, addDoc } from './firebase';
 
 export const storageService = {
-  // --- User Profiles ---
-  async syncUser(user?: User): Promise<User | null> {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) {
-      return JSON.parse(stored) as User;
-    }
-    if (user) {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+  /**
+   * Syncs user metadata and preferences with Firestore
+   */
+  async syncUser(user: User): Promise<User | null> {
+    const userRef = doc(db, 'users', user.id);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      // Merge existing cloud data with new login data
+      const cloudData = userDoc.data() as User;
+      return { ...user, ...cloudData };
+    } else {
+      // First time login - initialize profile
+      await setDoc(userRef, user);
       return user;
     }
-    return null;
   },
 
-  async updateUserPreferences(userId: string, preferences: any) {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) {
-      const user = JSON.parse(stored) as User;
-      const updatedUser = { ...user, preferences };
-      localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
-    }
+  /**
+   * Updates user preferences (Conditions, Theme, etc.) in Firestore
+   */
+  async updateUserPreferences(userId: string, updates: Partial<User>) {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, updates, { merge: true });
   },
 
-  // --- Scan History ---
-  async saveScan(userId: string, result: ScanResult, profile: UserProfile, imageFile?: File): Promise<void> {
-    const history = await this.getHistory(userId);
+  /**
+   * Saves a new scan result to the user's scan sub-collection in Firestore
+   */
+  async saveScan(userId: string, result: ScanResult, profile: UserProfile): Promise<void> {
+    const historyRef = collection(db, 'users', userId, 'scans');
     
-    // In local-first mode, we store metadata in localStorage.
-    // Base64 image storage is avoided to prevent exceeding the 5MB localStorage limit.
-    const newItem: HistoryItem = {
+    const newItem = {
       ...result,
-      id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
       profileId: profile.id,
       profileName: profile.name,
     };
 
-    const updatedHistory = [newItem, ...history];
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+    await addDoc(historyRef, newItem);
   },
 
+  /**
+   * Deletes a specific scan record from Firestore
+   */
   async deleteScan(userId: string, scanId: string): Promise<void> {
-    const history = await this.getHistory(userId);
-    const updatedHistory = history.filter(item => item.id !== scanId);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+    const scanRef = doc(db, 'users', userId, 'scans', scanId);
+    await deleteDoc(scanRef);
   },
 
+  /**
+   * Retrieves full scan history for the authenticated user from Firestore
+   */
   async getHistory(userId: string): Promise<HistoryItem[]> {
-    const stored = localStorage.getItem(HISTORY_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored) as HistoryItem[];
-      } catch (e) {
-        console.error("Failed to parse history", e);
-        return [];
-      }
+    const historyRef = collection(db, 'users', userId, 'scans');
+    const q = query(historyRef, orderBy('timestamp', 'desc'));
+    
+    try {
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as HistoryItem[];
+    } catch (e) {
+      console.error("Failed to fetch history from Firestore", e);
+      return [];
     }
-    return [];
-  },
-
-  async clearAllData() {
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(HISTORY_KEY);
   }
 };
