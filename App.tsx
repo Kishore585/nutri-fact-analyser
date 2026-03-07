@@ -11,7 +11,7 @@ import ProductReport from './components/ProductReport';
 import { analyzeImage } from './services/geminiService';
 import { storageService } from './services/storageService';
 import { PROFILES } from './constants';
-import { ShieldCheck, History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize } from 'lucide-react';
+import { ShieldCheck, History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize, Sun, Moon } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>('AUTH');
@@ -22,6 +22,22 @@ const App: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('nutriscan_theme');
+    return saved === 'dark';
+  });
+
+  // Apply dark class on mount and changes
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('nutriscan_theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  const toggleDarkMode = () => setIsDark(prev => !prev);
 
   const getProfileObject = (id?: string) => PROFILES.find(p => p.id === id) || PROFILES[0];
 
@@ -44,7 +60,7 @@ const App: React.FC = () => {
 
     const handleFsChange = () => setIsFullScreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFsChange);
-    
+
     return () => {
       document.removeEventListener('fullscreenchange', handleFsChange);
     };
@@ -111,12 +127,12 @@ const App: React.FC = () => {
     try {
       const analysisData = await analyzeImage(file, baseProfile.promptContext, user.preferences?.customConditions);
       setResult(analysisData);
-      
+
       await storageService.saveScan(user.id, analysisData, baseProfile);
-      
+
       const updatedHistory = await storageService.getHistory(user.id);
       setHistory(updatedHistory);
-      
+
       setState('RESULTS');
     } catch (err: any) {
       setError(err.message || "Failed to process image.");
@@ -133,84 +149,76 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center dark:bg-dark-bg">
+        <Loader2 className="w-8 h-8 text-primary dark:text-dark-primary animate-spin" />
       </div>
     );
   }
 
   const activeProfile = getProfileObject(user?.preferences?.baseProfileId);
-  const themeClass = user?.preferences?.theme ? `theme-${user.preferences.theme}` : 'theme-indigo';
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-500 ${themeClass}`}>
-      <style>{`
-        .theme-indigo .text-indigo-600 { color: #4f46e5; }
-        .theme-indigo .bg-indigo-600 { background-color: #4f46e5; }
-        .theme-indigo .bg-indigo-50 { background-color: #eef2ff; }
-        .theme-emerald .text-indigo-600 { color: #059669; }
-        .theme-emerald .bg-indigo-600 { background-color: #059669; }
-        .theme-emerald .bg-indigo-50 { background-color: #ecfdf5; }
-        .theme-slate .text-indigo-600 { color: #334155; }
-        .theme-slate .bg-indigo-600 { background-color: #334155; }
-        .theme-slate .bg-indigo-50 { background-color: #f1f5f9; }
-        .theme-rose .text-indigo-600 { color: #e11d48; }
-        .theme-rose .bg-indigo-600 { background-color: #e11d48; }
-        .theme-rose .bg-indigo-50 { background-color: #fff1f2; }
-      `}</style>
-      
-      <header className="px-6 pt-8 sticky top-0 z-50 print:hidden">
-        <div className="max-w-[1600px] mx-auto h-24 glass rounded-[2.5rem] px-10 flex items-center justify-between shadow-2xl">
-          <button 
-            onClick={() => user ? reset() : null} 
-            className="flex items-center gap-4 group disabled:opacity-50"
+    <div className="min-h-screen flex flex-col font-sans dark:bg-dark-bg transition-colors duration-300">
+
+      <header className="px-4 md:px-6 pt-4 sticky top-0 z-50 print:hidden">
+        <div className="max-w-[1400px] mx-auto h-16 bg-white/80 dark:bg-dark-surface/90 backdrop-blur-xl rounded-2xl px-6 flex items-center justify-between border border-outline-variant dark:border-dark-border shadow-elevation-1 dark:shadow-dark-elevation-1 transition-colors">
+          <button
+            onClick={() => user ? reset() : null}
+            className="flex items-center gap-3 group disabled:opacity-50"
             disabled={state === 'AUTH'}
           >
-             <div className="bg-slate-900 p-3 rounded-2xl text-white group-hover:scale-110 transition-transform shadow-xl shadow-slate-900/10">
-               <ShieldCheck className="w-6 h-6" />
-             </div>
-             <span className="font-black text-2xl tracking-tighter text-slate-900">NutriScan<span className="text-indigo-600">AI</span></span>
+            <div className="bg-primary p-2 rounded-xl text-white group-hover:scale-105 transition-transform">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-base tracking-tight text-on-surface dark:text-dark-text">NutriScan<span className="text-primary dark:text-dark-primary">AI</span></span>
           </button>
-          
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={toggleFullScreen} 
-              className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all"
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2.5 text-on-surface-variant dark:text-dark-text-secondary hover:text-primary dark:hover:text-dark-primary hover:bg-primary-light dark:hover:bg-dark-surface-container rounded-xl transition-all"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-                {isFullScreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+              {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+            </button>
+            <button
+              onClick={toggleFullScreen}
+              className="p-2.5 text-on-surface-variant dark:text-dark-text-secondary hover:text-primary dark:hover:text-dark-primary hover:bg-primary-light dark:hover:bg-dark-surface-container rounded-xl transition-all"
+            >
+              {isFullScreen ? <Minimize className="w-[18px] h-[18px]" /> : <Maximize className="w-[18px] h-[18px]" />}
             </button>
 
             {user && state !== 'AUTH' && (
-               <>
-                  <button onClick={() => setState('HISTORY')} className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
-                      <History className="w-6 h-6" />
+              <>
+                <button onClick={() => setState('HISTORY')} className="p-2.5 text-on-surface-variant dark:text-dark-text-secondary hover:text-primary dark:hover:text-dark-primary hover:bg-primary-light dark:hover:bg-dark-surface-container rounded-xl transition-all">
+                  <History className="w-[18px] h-[18px]" />
+                </button>
+                <button onClick={() => setState('PROFILE_EDITOR')} className="p-2.5 text-on-surface-variant dark:text-dark-text-secondary hover:text-primary dark:hover:text-dark-primary hover:bg-primary-light dark:hover:bg-dark-surface-container rounded-xl transition-all">
+                  <Settings className="w-[18px] h-[18px]" />
+                </button>
+                <div className="h-6 w-px bg-outline-variant dark:bg-dark-border mx-2"></div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setState('ACCOUNT_SETTINGS')}
+                    className="w-8 h-8 rounded-full bg-primary-container dark:bg-dark-primary-container flex items-center justify-center text-primary dark:text-dark-primary hover:scale-105 transition-all overflow-hidden"
+                  >
+                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon className="w-4 h-4" />}
                   </button>
-                  <button onClick={() => setState('PROFILE_EDITOR')} className="p-4 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all">
-                      <Settings className="w-6 h-6" />
+                  <button onClick={handleLogout} className="p-2 text-on-surface-variant dark:text-dark-text-secondary hover:text-accent-rose transition-colors">
+                    <LogOut className="w-[18px] h-[18px]" />
                   </button>
-                  <div className="h-10 w-px bg-slate-200/60 mx-4"></div>
-                  <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => setState('ACCOUNT_SETTINGS')}
-                        className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border-2 border-white shadow-md text-indigo-600 hover:scale-110 transition-all overflow-hidden"
-                      >
-                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="avatar" /> : <UserIcon className="w-6 h-6" />}
-                      </button>
-                      <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500 transition-colors p-2">
-                          <LogOut className="w-6 h-6" />
-                      </button>
-                  </div>
-               </>
+                </div>
+              </>
             )}
           </div>
         </div>
       </header>
 
-      <main className="flex-grow flex flex-col items-center justify-center pt-12 pb-24 px-6 min-h-[calc(100vh-180px)]">
+      <main className="flex-grow flex flex-col items-center justify-center pt-8 pb-20 px-4 md:px-6 min-h-[calc(100vh-140px)] transition-colors">
         {error && (
-          <div className="w-full max-w-lg mx-auto glass border-rose-200 text-rose-700 px-8 py-5 rounded-[2rem] mb-12 flex items-center justify-between animate-fade-in shadow-2xl">
-             <span className="font-bold text-sm tracking-tight">{error}</span>
-             <button onClick={() => setError(null)} className="text-[10px] font-black uppercase tracking-widest hover:underline">Dismiss</button>
+          <div className="w-full max-w-lg mx-auto bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-8 flex items-center justify-between animate-fade-in">
+            <span className="font-medium text-sm">{error}</span>
+            <button onClick={() => setError(null)} className="text-xs font-semibold uppercase tracking-wide hover:underline ml-4">Dismiss</button>
           </div>
         )}
 
@@ -225,10 +233,10 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className="px-6 pb-12 print:hidden">
-        <div className="max-w-4xl mx-auto glass rounded-[3rem] p-8 text-center">
-          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">
-            © {new Date().getFullYear()} NutriScan AI • Cloud Powered Nutritional Intelligence
+      <footer className="px-4 md:px-6 pb-8 print:hidden">
+        <div className="max-w-3xl mx-auto text-center py-4">
+          <p className="text-xs text-on-surface-variant/60 dark:text-dark-text-secondary/60 font-medium tracking-wide">
+            © {new Date().getFullYear()} NutriScan AI · Nutritional Intelligence
           </p>
         </div>
       </footer>

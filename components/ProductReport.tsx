@@ -27,82 +27,80 @@ const ProductReport: React.FC<ProductReportProps> = ({ result, profileName, user
 
   const getStatusIcon = (status: SafetyStatus) => {
     switch (status) {
-      case SafetyStatus.SAFE: return <ShieldCheck className="w-12 h-12 text-emerald-600" />;
-      case SafetyStatus.UNSAFE: return <ShieldAlert className="w-12 h-12 text-red-600" />;
-      default: return <Shield className="w-12 h-12 text-amber-600" />;
+      case SafetyStatus.SAFE: return <ShieldCheck className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />;
+      case SafetyStatus.UNSAFE: return <ShieldAlert className="w-10 h-10 text-red-600 dark:text-red-400" />;
+      default: return <Shield className="w-10 h-10 text-amber-600 dark:text-amber-400" />;
     }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 animate-fade-in print:p-0">
-      {/* UI Controls - Hidden on Print */}
-      <div className="flex items-center justify-between mb-8 print:hidden">
-        <button 
+    <div className="w-full max-w-4xl mx-auto p-4 md:p-6 animate-fade-in print:p-0">
+      {/* UI Controls */}
+      <div className="flex items-center justify-between mb-6 print:hidden">
+        <button
           onClick={onBack}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-medium"
+          className="flex items-center gap-2 text-on-surface-variant dark:text-dark-text-secondary hover:text-on-surface dark:hover:text-dark-text transition-colors text-sm font-medium"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Analysis
         </button>
-        <div className="flex gap-3">
-          <button 
+        <div className="flex gap-2">
+          <button
             onClick={handleCopy}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-all font-medium shadow-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-dark-surface border border-outline-variant dark:border-dark-border rounded-xl text-on-surface dark:text-dark-text hover:bg-surface-container dark:hover:bg-dark-surface-container transition-all text-sm font-medium"
           >
-            <Share2 className="w-4 h-4" /> Share
+            <Share2 className="w-3.5 h-3.5" /> Share
           </button>
-          <button 
+          <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-medium shadow-md"
+            className="flex items-center gap-2 px-3 py-2 bg-on-surface dark:bg-dark-text text-white dark:text-dark-bg rounded-xl hover:bg-on-surface/90 transition-all text-sm font-medium"
           >
-            <Printer className="w-4 h-4" /> Print PDF
+            <Printer className="w-3.5 h-3.5" /> Print PDF
           </button>
         </div>
       </div>
 
-      {/* Actual Report Document */}
-      <div className="bg-white shadow-2xl rounded-3xl overflow-hidden border border-slate-200 print:shadow-none print:border-none print:rounded-none">
+      {/* Report Document */}
+      <div className="bg-white dark:bg-dark-surface shadow-elevation-3 dark:shadow-dark-elevation-3 rounded-3xl overflow-hidden border border-outline-variant dark:border-dark-border print:shadow-none print:border-none print:rounded-none transition-colors">
         {/* Header Ribbon */}
-        <div className={`h-2 w-full ${
-          result.verdict === SafetyStatus.SAFE ? 'bg-emerald-500' : 
+        <div className={`h-1.5 w-full ${result.verdict === SafetyStatus.SAFE ? 'bg-emerald-500' :
           result.verdict === SafetyStatus.UNSAFE ? 'bg-red-500' : 'bg-amber-500'
-        }`} />
+          }`} />
 
-        <div className="p-8 md:p-12">
+        <div className="p-6 md:p-10">
           {/* Document Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-12 pb-12 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10 pb-10 border-b border-outline-variant dark:border-dark-border">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-6 h-6 text-emerald-600" />
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">Nutritional Analysis Report</h1>
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-5 h-5 text-primary dark:text-dark-primary" />
+                <h1 className="text-lg font-bold tracking-tight text-on-surface dark:text-dark-text uppercase">Nutritional Analysis Report</h1>
               </div>
-              <p className="text-slate-400 text-sm font-mono uppercase tracking-widest">ID: {reportId}</p>
+              <p className="text-on-surface-variant dark:text-dark-text-secondary text-xs font-mono uppercase tracking-widest">ID: {reportId}</p>
             </div>
-            <div className="text-right md:text-right text-slate-500 text-sm">
-              <p>Prepared for: <span className="text-slate-900 font-semibold">{userName}</span></p>
-              <p>Profile: <span className="text-slate-900 font-semibold">{profileName}</span></p>
-              <p>Date: <span className="text-slate-900 font-semibold">{date.toLocaleDateString()} {date.toLocaleTimeString()}</span></p>
+            <div className="text-right md:text-right text-on-surface-variant dark:text-dark-text-secondary text-sm">
+              <p>Prepared for: <span className="text-on-surface dark:text-dark-text font-semibold">{userName}</span></p>
+              <p>Profile: <span className="text-on-surface dark:text-dark-text font-semibold">{profileName}</span></p>
+              <p>Date: <span className="text-on-surface dark:text-dark-text font-semibold">{date.toLocaleDateString()} {date.toLocaleTimeString()}</span></p>
             </div>
           </div>
 
           {/* Verdict Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            <div className={`col-span-1 rounded-2xl p-8 flex flex-col items-center justify-center text-center border-2 ${
-              result.verdict === SafetyStatus.SAFE ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : 
-              result.verdict === SafetyStatus.UNSAFE ? 'bg-red-50 border-red-100 text-red-900' : 'bg-amber-50 border-amber-100 text-amber-900'
-            }`}>
-              <div className="mb-4">{getStatusIcon(result.verdict)}</div>
-              <h2 className="text-2xl font-black uppercase tracking-tight mb-1">{result.verdict}</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            <div className={`col-span-1 rounded-2xl p-6 flex flex-col items-center justify-center text-center border ${result.verdict === SafetyStatus.SAFE ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' :
+              result.verdict === SafetyStatus.UNSAFE ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-300' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300'
+              }`}>
+              <div className="mb-3">{getStatusIcon(result.verdict)}</div>
+              <h2 className="text-xl font-bold uppercase tracking-tight mb-1">{result.verdict}</h2>
               <p className="text-sm font-medium opacity-70">Safety Verdict</p>
             </div>
-            
-            <div className="col-span-2 space-y-4">
-              <h3 className="text-lg font-bold text-slate-900">Executive Summary</h3>
-              <p className="text-slate-600 leading-relaxed text-lg italic font-serif">
+
+            <div className="col-span-2 space-y-3">
+              <h3 className="text-base font-bold text-on-surface dark:text-dark-text">Executive Summary</h3>
+              <p className="text-on-surface-variant dark:text-dark-text-secondary leading-relaxed text-base italic">
                 "{result.summary}"
               </p>
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {result.nutritionalHighlights.map((tag, i) => (
-                  <span key={i} className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full uppercase tracking-wide">
+                  <span key={i} className="px-2.5 py-1 bg-surface-container dark:bg-dark-surface-container text-on-surface-variant dark:text-dark-text-secondary text-xs font-medium rounded-lg">
                     {tag}
                   </span>
                 ))}
@@ -110,36 +108,35 @@ const ProductReport: React.FC<ProductReportProps> = ({ result, profileName, user
             </div>
           </div>
 
-          {/* Detailed Ingredients Table */}
+          {/* Ingredients Table */}
           <div>
-            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-sm">01</span>
+            <h3 className="text-base font-bold text-on-surface dark:text-dark-text mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-surface-container dark:bg-dark-surface-container flex items-center justify-center text-xs font-semibold text-on-surface-variant dark:text-dark-text-secondary">01</span>
               Ingredient Composition Analysis
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-y border-slate-100 text-slate-400 text-xs uppercase tracking-widest font-bold">
-                    <th className="py-4 px-4">Ingredient Name</th>
-                    <th className="py-4 px-4">Classification</th>
-                    <th className="py-4 px-4">Health Implication</th>
-                    <th className="py-4 px-4 text-right">Status</th>
+                  <tr className="bg-surface-container dark:bg-dark-surface-container border-y border-outline-variant dark:border-dark-border text-on-surface-variant dark:text-dark-text-secondary text-xs uppercase tracking-wider font-semibold">
+                    <th className="py-3 px-4">Ingredient Name</th>
+                    <th className="py-3 px-4">Classification</th>
+                    <th className="py-3 px-4">Health Implication</th>
+                    <th className="py-3 px-4 text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-outline-variant dark:divide-dark-border">
                   {result.ingredients.map((ing, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4 px-4">
-                        <p className="font-bold text-slate-900">{ing.commonName}</p>
-                        <p className="text-xs text-slate-400 font-mono italic">{ing.name}</p>
+                    <tr key={i} className="hover:bg-surface dark:hover:bg-dark-surface-dim transition-colors">
+                      <td className="py-3 px-4">
+                        <p className="font-semibold text-on-surface dark:text-dark-text text-sm">{ing.commonName}</p>
+                        <p className="text-xs text-on-surface-variant dark:text-dark-text-secondary font-mono">{ing.name}</p>
                       </td>
-                      <td className="py-4 px-4 text-sm text-slate-600">{ing.description}</td>
-                      <td className="py-4 px-4 text-sm text-slate-600 leading-snug">{ing.reason}</td>
-                      <td className="py-4 px-4 text-right">
-                        <span className={`inline-block px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${
-                          ing.status === SafetyStatus.SAFE ? 'bg-emerald-100 text-emerald-700' :
-                          ing.status === SafetyStatus.UNSAFE ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
+                      <td className="py-3 px-4 text-sm text-on-surface-variant dark:text-dark-text-secondary">{ing.description}</td>
+                      <td className="py-3 px-4 text-sm text-on-surface-variant dark:text-dark-text-secondary leading-snug">{ing.reason}</td>
+                      <td className="py-3 px-4 text-right">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${ing.status === SafetyStatus.SAFE ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
+                          ing.status === SafetyStatus.UNSAFE ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                          }`}>
                           {ing.status}
                         </span>
                       </td>
@@ -151,12 +148,12 @@ const ProductReport: React.FC<ProductReportProps> = ({ result, profileName, user
           </div>
 
           {/* Footer Disclaimer */}
-          <div className="mt-16 pt-8 border-t border-slate-100">
-            <div className="flex items-center gap-4 text-slate-400 text-[10px] leading-relaxed">
-              <ShieldCheck className="w-8 h-8 opacity-20" />
+          <div className="mt-12 pt-6 border-t border-outline-variant dark:border-dark-border">
+            <div className="flex items-start gap-3 text-on-surface-variant/50 dark:text-dark-text-secondary/50 text-[10px] leading-relaxed">
+              <ShieldCheck className="w-6 h-6 opacity-30 flex-shrink-0 mt-0.5" />
               <p>
-                DISCLAIMER: This report is generated by an artificial intelligence (NutriScan AI) and is for informational purposes only. 
-                It does not constitute medical advice, diagnosis, or treatment. Always consult with a qualified healthcare professional 
+                DISCLAIMER: This report is generated by an artificial intelligence (NutriScan AI) and is for informational purposes only.
+                It does not constitute medical advice, diagnosis, or treatment. Always consult with a qualified healthcare professional
                 before making dietary changes or if you have severe food allergies. AI interpretations may occasionally be inaccurate.
               </p>
             </div>
