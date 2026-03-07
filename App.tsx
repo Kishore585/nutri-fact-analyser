@@ -216,7 +216,7 @@ const App: React.FC = () => {
 
       <main className="flex-grow flex flex-col items-center justify-center pt-8 pb-20 px-4 md:px-6 min-h-[calc(100vh-140px)] transition-colors">
         {error && (
-          <div className="w-full max-w-lg mx-auto bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-8 flex items-center justify-between animate-fade-in">
+          <div className="w-full max-w-lg mx-auto bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-6 py-4 rounded-2xl mb-8 flex items-center justify-between animate-fade-in">
             <span className="font-medium text-sm">{error}</span>
             <button onClick={() => setError(null)} className="text-xs font-semibold uppercase tracking-wide hover:underline ml-4">Dismiss</button>
           </div>

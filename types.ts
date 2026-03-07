@@ -14,18 +14,33 @@ export interface IngredientAnalysis {
   reason: string;
 }
 
+export interface Recipe {
+  name: string;
+  description: string;
+  youtubeSearchQuery: string;
+}
+
+export interface ConsumptionGuidance {
+  type: 'recipe' | 'moderation' | 'portion';
+  title: string;
+  advice: string;
+  recipes?: Recipe[];
+  dailyAmount?: string;
+}
+
 export interface ScanResult {
   verdict: SafetyStatus;
   summary: string;
   ingredients: IngredientAnalysis[];
   nutritionalHighlights: string[];
+  consumptionGuidance?: ConsumptionGuidance;
 }
 
 export interface HistoryItem extends ScanResult {
   id: string;
   timestamp: number;
   profileId: string;
-  profileName: string; 
+  profileName: string;
 }
 
 export interface UserPreferences {

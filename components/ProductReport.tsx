@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ScanResult, SafetyStatus, HistoryItem } from '../types';
-import { Printer, Share2, ArrowLeft, ShieldCheck, ShieldAlert, Shield, FileText } from 'lucide-react';
+import { Printer, Share2, ArrowLeft, ShieldCheck, ShieldAlert, Shield, FileText, Youtube, ExternalLink } from 'lucide-react';
 
 interface ProductReportProps {
   result: ScanResult;
@@ -146,6 +146,55 @@ const ProductReport: React.FC<ProductReportProps> = ({ result, profileName, user
               </table>
             </div>
           </div>
+
+          {/* Consumption Guidance Section */}
+          {result.consumptionGuidance && (
+            <div className="mt-10">
+              <h3 className="text-base font-bold text-on-surface dark:text-dark-text mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-surface-container dark:bg-dark-surface-container flex items-center justify-center text-xs font-semibold text-on-surface-variant dark:text-dark-text-secondary">02</span>
+                {result.consumptionGuidance.title}
+              </h3>
+              <p className="text-on-surface-variant dark:text-dark-text-secondary text-sm leading-relaxed mb-4">{result.consumptionGuidance.advice}</p>
+
+              {result.consumptionGuidance.type === 'recipe' && result.consumptionGuidance.recipes && (
+                <div className="space-y-3">
+                  {result.consumptionGuidance.recipes.map((recipe, idx) => (
+                    <div key={idx} className="bg-surface-container dark:bg-dark-surface-container rounded-xl p-4 border border-outline-variant/50 dark:border-dark-border/50">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-bold text-on-surface dark:text-dark-text mb-1">{recipe.name}</h4>
+                          <p className="text-xs text-on-surface-variant dark:text-dark-text-secondary leading-relaxed">{recipe.description}</p>
+                        </div>
+                        <a
+                          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.youtubeSearchQuery)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-semibold print:hidden"
+                        >
+                          <Youtube className="w-3.5 h-3.5" /> Watch
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {result.consumptionGuidance.type === 'portion' && result.consumptionGuidance.dailyAmount && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 text-center">
+                  <p className="text-[10px] font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-1">Recommended Daily Amount</p>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{result.consumptionGuidance.dailyAmount}</p>
+                </div>
+              )}
+
+              {result.consumptionGuidance.type === 'moderation' && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4">
+                  <p className="text-amber-800 dark:text-amber-300 text-sm font-medium leading-relaxed">
+                    ⚡ This is a processed food item. Consume in minimal quantities and consider healthier alternatives.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Footer Disclaimer */}
           <div className="mt-12 pt-6 border-t border-outline-variant dark:border-dark-border">
