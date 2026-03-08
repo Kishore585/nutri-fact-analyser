@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ScanResult, SafetyStatus, IngredientAnalysis, ConsumptionGuidance } from '../types';
-import { CheckCircle, AlertTriangle, XCircle, ChevronDown, ChevronUp, RefreshCw, Info, FileText, Share2, UtensilsCrossed, ShieldAlert as ModIcon, Scale, Youtube, ExternalLink } from 'lucide-react';
+import { RefreshCw, Share2, ChevronDown, BookOpen, Youtube, ExternalLink } from 'lucide-react';
 
 interface AnalysisViewProps {
   result: ScanResult;
@@ -12,118 +12,177 @@ interface AnalysisViewProps {
 
 const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, onViewReport, userProfileName }) => {
 
-  const getVerdictStyles = (status: SafetyStatus) => {
+  const getVerdictConfig = (status: SafetyStatus) => {
     switch (status) {
       case SafetyStatus.SAFE:
-        return {
-          gradient: 'from-emerald-400 to-teal-500',
-          bg: 'bg-emerald-50',
-          border: 'border-emerald-200',
-          text: 'text-emerald-700',
-          icon: <CheckCircle className="w-14 h-14 text-white" />,
-          label: 'Health Grade: A'
-        };
+        return { letter: 'A', color: '#6B8F71', trackColor: '#E8F0E9', label: 'Health Grade: A' };
       case SafetyStatus.CAUTION:
-        return {
-          gradient: 'from-amber-400 to-orange-500',
-          bg: 'bg-amber-50',
-          border: 'border-amber-200',
-          text: 'text-amber-700',
-          icon: <AlertTriangle className="w-14 h-14 text-white" />,
-          label: 'Moderate Risk'
-        };
+        return { letter: 'B', color: '#D4A843', trackColor: '#FFF4E0', label: 'Moderate Risk' };
       case SafetyStatus.UNSAFE:
-        return {
-          gradient: 'from-rose-500 to-red-600',
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          text: 'text-red-700',
-          icon: <XCircle className="w-14 h-14 text-white" />,
-          label: 'Danger Zone'
-        };
+        return { letter: 'C', color: '#C75050', trackColor: '#FFE8E8', label: 'High Risk' };
       default:
-        return {
-          gradient: 'from-slate-400 to-slate-500',
-          bg: 'bg-slate-50',
-          border: 'border-slate-200',
-          text: 'text-slate-700',
-          icon: <Info className="w-14 h-14 text-white" />,
-          label: 'Inconclusive'
-        };
+        return { letter: '?', color: '#8B8B8B', trackColor: '#F0F0F0', label: 'Inconclusive' };
     }
   };
 
-  const styles = getVerdictStyles(result.verdict);
+  const getIndicatorColor = (idx: number, total: number) => {
+    const colors = ['#6B8F71', '#6B8F71', '#D4A843', '#6B8F71', '#D4A843', '#C75050', '#8B8B8B'];
+    return colors[idx % colors.length];
+  };
+
+  const verdict = getVerdictConfig(result.verdict);
+
+  // SVG ring gauge values
+  const radius = 72;
+  const circumference = 2 * Math.PI * radius;
+  const progress = result.verdict === SafetyStatus.SAFE ? 0.92 :
+    result.verdict === SafetyStatus.CAUTION ? 0.65 :
+      result.verdict === SafetyStatus.UNSAFE ? 0.35 : 0.5;
+  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 pb-16 animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        {/* Left Column: Verdict Card */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white dark:bg-dark-surface p-10 rounded-3xl text-center flex flex-col items-center border border-outline-variant dark:border-dark-border shadow-elevation-2 dark:shadow-dark-elevation-2 transition-colors">
-            <div className="relative mb-8">
-              <div className={`w-36 h-36 rounded-full bg-gradient-to-br ${styles.gradient} shadow-elevation-3 flex items-center justify-center`}>
-                {styles.icon}
+        {/* ═══════════ Left Column: Verdict & Key Indicators ═══════════ */}
+        <div className="lg:col-span-4 space-y-8">
+
+          {/* Verdict Gauge Card */}
+          <div className="bg-white dark:bg-dark-surface p-8 rounded-3xl text-center flex flex-col items-center border border-outline-variant/40 dark:border-dark-border shadow-sm dark:shadow-dark-elevation-1 transition-colors">
+
+            {/* Circular Gauge */}
+            <div className="relative w-44 h-44 mb-6">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
+                {/* Track */}
+                <circle
+                  cx="80" cy="80" r={radius}
+                  fill="none"
+                  stroke={verdict.trackColor}
+                  strokeWidth="10"
+                  className="dark:opacity-30"
+                />
+                {/* Progress */}
+                <circle
+                  cx="80" cy="80" r={radius}
+                  fill="none"
+                  stroke={verdict.color}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              {/* Center Letter */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span
+                  className="text-5xl tracking-tight"
+                  style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 700, color: verdict.color }}
+                >
+                  {verdict.letter}
+                </span>
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-on-surface dark:text-dark-text mb-1 tracking-tight">{styles.label}</h2>
-            <p className="text-on-surface-variant dark:text-dark-text-secondary font-medium uppercase tracking-widest text-[10px] mb-8">{userProfileName} PROFILE</p>
+            <p className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-[0.25em] mb-1">
+              Current Assessment
+            </p>
+            <h2
+              className="text-lg text-on-surface dark:text-dark-text mb-6"
+              style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
+            >
+              {userProfileName} Profile
+            </h2>
 
-            <div className="flex gap-3 w-full">
-              <button onClick={onReset} className="flex-1 bg-surface-container dark:bg-dark-surface-container p-3 rounded-xl hover:bg-surface-container-high dark:hover:bg-dark-surface-container-high transition-all text-on-surface-variant dark:text-dark-text-secondary flex justify-center active:scale-[0.98]">
-                <RefreshCw className="w-5 h-5" />
+            {/* Action Buttons */}
+            <div className="flex gap-3 w-full max-w-[200px]">
+              <button
+                onClick={onReset}
+                className="flex-1 py-3 border border-outline-variant dark:border-dark-border rounded-xl hover:bg-surface-container dark:hover:bg-dark-surface-container transition-all text-on-surface-variant dark:text-dark-text-secondary flex justify-center active:scale-[0.97]"
+              >
+                <RefreshCw className="w-4 h-4" />
               </button>
-              <button className="flex-1 bg-surface-container dark:bg-dark-surface-container p-3 rounded-xl hover:bg-surface-container-high dark:hover:bg-dark-surface-container-high transition-all text-on-surface-variant dark:text-dark-text-secondary flex justify-center active:scale-[0.98]">
-                <Share2 className="w-5 h-5" />
+              <button
+                className="flex-1 py-3 border border-outline-variant dark:border-dark-border rounded-xl hover:bg-surface-container dark:hover:bg-dark-surface-container transition-all text-on-surface-variant dark:text-dark-text-secondary flex justify-center active:scale-[0.97]"
+              >
+                <Share2 className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl border border-outline-variant dark:border-dark-border shadow-elevation-1 dark:shadow-dark-elevation-1 transition-colors">
-            <h4 className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-widest mb-4">Observations</h4>
-            <div className="space-y-2">
+          {/* Key Indicators */}
+          <div className="px-2">
+            <h4 className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-[0.25em] mb-5">
+              Key Indicators
+            </h4>
+            <div className="space-y-4">
               {result.nutritionalHighlights.map((h, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-surface-container dark:bg-dark-surface-container p-3 rounded-xl">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-dark-primary flex-shrink-0"></div>
-                  <span className="text-xs font-medium text-on-surface dark:text-dark-text">{h}</span>
+                <div key={idx} className="flex items-center gap-3">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: getIndicatorColor(idx, result.nutritionalHighlights.length) }}
+                  />
+                  <span className="text-sm text-on-surface dark:text-dark-text leading-snug">{h}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Summary, Consumption Guidance & Ingredients */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white dark:bg-dark-surface p-10 rounded-3xl border border-outline-variant dark:border-dark-border shadow-elevation-2 dark:shadow-dark-elevation-2 transition-colors">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold text-on-surface dark:text-dark-text tracking-tight">Analysis Brief</h3>
-              <button onClick={onViewReport} className="bg-primary-light dark:bg-dark-primary-light text-primary dark:text-dark-primary px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-primary-container dark:hover:bg-dark-primary-container transition-all">
+        {/* ═══════════ Right Column: Analysis Brief + Consumption + Ingredients ═══════════ */}
+        <div className="lg:col-span-8 space-y-10">
+
+          {/* Analysis Brief */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3
+                className="text-3xl text-on-surface dark:text-dark-text"
+                style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
+              >
+                Analysis Brief
+              </h3>
+              <button
+                onClick={onViewReport}
+                className="px-5 py-2.5 border border-on-surface dark:border-dark-text rounded-lg text-on-surface dark:text-dark-text text-[10px] font-semibold uppercase tracking-[0.2em] hover:bg-on-surface hover:text-white dark:hover:bg-dark-text dark:hover:text-dark-bg transition-all"
+              >
                 Full Report
               </button>
             </div>
-            <p className="text-on-surface-variant dark:text-dark-text-secondary text-lg leading-relaxed italic border-l-2 border-primary dark:border-dark-primary pl-6 py-1">
-              "{result.summary}"
-            </p>
+
+            <div className="border-l-2 border-on-surface-variant/30 dark:border-dark-border pl-6 py-2">
+              <p
+                className="text-on-surface-variant dark:text-dark-text-secondary text-lg leading-relaxed"
+                style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontStyle: 'italic' }}
+              >
+                "{result.summary}"
+              </p>
+            </div>
           </div>
 
-          {/* Consumption Guidance Section */}
+          {/* Consumption Guidance */}
           {result.consumptionGuidance && (
             <ConsumptionGuidanceCard guidance={result.consumptionGuidance} />
           )}
 
-          <div className="bg-white dark:bg-dark-surface rounded-3xl overflow-hidden border border-outline-variant dark:border-dark-border shadow-elevation-2 dark:shadow-dark-elevation-2 transition-colors">
-            <div className="p-6 border-b border-outline-variant dark:border-dark-border flex items-center justify-between">
-              <h3 className="text-xl font-bold text-on-surface dark:text-dark-text tracking-tight">Ingredient Composition</h3>
-              <span className="bg-on-surface dark:bg-dark-text text-white dark:text-dark-bg text-[10px] font-semibold px-3 py-1 rounded-full">
+          {/* Ingredient Composition */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                className="text-2xl text-on-surface dark:text-dark-text"
+                style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
+              >
+                Ingredient Composition
+              </h3>
+              <span className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-wider">
                 {result.ingredients.length} items
               </span>
             </div>
-            <div className="divide-y divide-outline-variant dark:divide-dark-border">
-              {result.ingredients.map((ing, index) => (
-                <IngredientRow key={index} ingredient={ing} />
-              ))}
+            <div className="bg-white dark:bg-dark-surface rounded-2xl overflow-hidden border border-outline-variant/40 dark:border-dark-border shadow-sm dark:shadow-dark-elevation-1 transition-colors">
+              <div className="divide-y divide-outline-variant/50 dark:divide-dark-border">
+                {result.ingredients.map((ing, index) => (
+                  <IngredientRow key={index} ingredient={ing} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -133,163 +192,155 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ result, onReset, onViewRepo
   );
 };
 
-/* ======================== Consumption Guidance Card ======================== */
+/* ════════════════════════ Consumption Guidance ════════════════════════ */
 
 const ConsumptionGuidanceCard: React.FC<{ guidance: ConsumptionGuidance }> = ({ guidance }) => {
-  const getGuidanceIcon = () => {
+
+  const getBadgeConfig = () => {
     switch (guidance.type) {
-      case 'recipe': return <UtensilsCrossed className="w-5 h-5" />;
-      case 'moderation': return <ModIcon className="w-5 h-5" />;
-      case 'portion': return <Scale className="w-5 h-5" />;
+      case 'recipe': return { label: '🍳 Recipes', bg: 'bg-[#6B8F71]/10 dark:bg-emerald-900/20', text: 'text-[#6B8F71] dark:text-emerald-400' };
+      case 'moderation': return { label: '⚠️ Moderation', bg: 'bg-amber-100/60 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' };
+      case 'portion': return { label: '📊 Daily Intake', bg: 'bg-blue-100/60 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-400' };
     }
   };
 
-  const getGuidanceAccent = () => {
-    switch (guidance.type) {
-      case 'recipe': return {
-        iconBg: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-        border: 'border-emerald-200 dark:border-emerald-800/50',
-        badge: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
-      };
-      case 'moderation': return {
-        iconBg: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-        border: 'border-amber-200 dark:border-amber-800/50',
-        badge: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
-      };
-      case 'portion': return {
-        iconBg: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-        border: 'border-blue-200 dark:border-blue-800/50',
-        badge: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
-      };
-    }
-  };
-
-  const accent = getGuidanceAccent();
+  const badge = getBadgeConfig();
 
   return (
-    <div className={`bg-white dark:bg-dark-surface rounded-3xl overflow-hidden border ${accent.border} shadow-elevation-2 dark:shadow-dark-elevation-2 transition-colors`}>
+    <div>
       {/* Header */}
-      <div className="p-6 flex items-center gap-4">
-        <div className={`p-3 rounded-xl ${accent.iconBg}`}>
-          {getGuidanceIcon()}
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-9 h-9 bg-surface-container dark:bg-dark-surface-container rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+          <BookOpen className="w-4 h-4 text-on-surface-variant dark:text-dark-text-secondary" />
         </div>
-        <div className="flex-grow">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-bold text-on-surface dark:text-dark-text tracking-tight">{guidance.title}</h3>
-          </div>
-          <span className={`inline-block px-2.5 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider ${accent.badge}`}>
-            {guidance.type === 'recipe' ? '🍳 Recipes' : guidance.type === 'moderation' ? '⚠️ Moderation' : '📊 Daily Intake'}
+        <div>
+          <h3
+            className="text-xl text-on-surface dark:text-dark-text mb-1"
+            style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
+          >
+            {guidance.title}
+          </h3>
+          <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ${badge.bg} ${badge.text}`}>
+            {badge.label}
           </span>
         </div>
       </div>
 
       {/* Advice */}
-      <div className="px-6 pb-4">
-        <p className="text-on-surface-variant dark:text-dark-text-secondary text-sm leading-relaxed">
-          {guidance.advice}
-        </p>
-      </div>
+      <p className="text-on-surface-variant dark:text-dark-text-secondary text-sm leading-relaxed mb-6 ml-12">
+        {guidance.advice}
+      </p>
 
       {/* Recipe Cards */}
       {guidance.type === 'recipe' && guidance.recipes && guidance.recipes.length > 0 && (
-        <div className="px-6 pb-6">
-          <div className="space-y-3">
-            {guidance.recipes.map((recipe, idx) => (
-              <div key={idx} className="bg-surface-container dark:bg-dark-surface-container rounded-2xl p-4 border border-outline-variant/50 dark:border-dark-border/50 hover:shadow-elevation-1 dark:hover:shadow-dark-elevation-1 transition-all">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-grow">
-                    <h4 className="text-sm font-bold text-on-surface dark:text-dark-text mb-1">{recipe.name}</h4>
-                    <p className="text-xs text-on-surface-variant dark:text-dark-text-secondary leading-relaxed">{recipe.description}</p>
-                  </div>
-                  <a
-                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.youtubeSearchQuery)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-semibold uppercase tracking-wider hover:bg-red-100 dark:hover:bg-red-900/40 transition-all group"
+        <div className="space-y-4 ml-12">
+          {guidance.recipes.map((recipe, idx) => (
+            <div
+              key={idx}
+              className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-outline-variant/40 dark:border-dark-border shadow-sm dark:shadow-dark-elevation-1 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-grow">
+                  <h4
+                    className="text-base text-on-surface dark:text-dark-text mb-2"
+                    style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
                   >
-                    <Youtube className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Watch</span>
-                    <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </a>
+                    {recipe.name}
+                  </h4>
+                  <p className="text-sm text-on-surface-variant dark:text-dark-text-secondary leading-relaxed">
+                    {recipe.description}
+                  </p>
                 </div>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.youtubeSearchQuery)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 border border-outline-variant dark:border-dark-border rounded-lg text-on-surface dark:text-dark-text text-[11px] font-semibold uppercase tracking-wider hover:bg-surface-container dark:hover:bg-dark-surface-container transition-all group"
+                >
+                  <Youtube className="w-3.5 h-3.5" />
+                  Watch
+                </a>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Daily Amount for Portion type */}
+      {/* Daily Amount */}
       {guidance.type === 'portion' && guidance.dailyAmount && (
-        <div className="px-6 pb-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5 text-center">
-            <p className="text-[10px] font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2">Recommended Daily Amount</p>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{guidance.dailyAmount}</p>
-          </div>
+        <div className="ml-12 bg-blue-50/60 dark:bg-blue-900/15 border border-blue-200/60 dark:border-blue-800/40 rounded-xl p-6 text-center">
+          <p className="text-[10px] font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] mb-2">Recommended Daily Amount</p>
+          <p
+            className="text-2xl text-blue-700 dark:text-blue-300"
+            style={{ fontFamily: "'Playfair Display', 'Georgia', serif", fontWeight: 600 }}
+          >
+            {guidance.dailyAmount}
+          </p>
         </div>
       )}
 
       {/* Moderation Warning */}
       {guidance.type === 'moderation' && (
-        <div className="px-6 pb-6">
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-5 flex items-start gap-3">
-            <div className="w-8 h-8 bg-amber-100 dark:bg-amber-800/40 rounded-lg flex items-center justify-center flex-shrink-0 text-lg">
-              ⚡
-            </div>
-            <p className="text-amber-800 dark:text-amber-300 text-sm font-medium leading-relaxed">
-              This is a processed food item. Consume in minimal quantities and consider healthier alternatives for your health goals.
-            </p>
-          </div>
+        <div className="ml-12 bg-amber-50/60 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-800/40 rounded-xl p-5 flex items-start gap-3">
+          <span className="text-lg flex-shrink-0">⚡</span>
+          <p className="text-amber-800 dark:text-amber-300 text-sm leading-relaxed">
+            This is a processed food item. Consume in minimal quantities and consider healthier alternatives for your health goals.
+          </p>
         </div>
       )}
     </div>
   );
 };
 
-/* ======================== Ingredient Row ======================== */
+/* ════════════════════════ Ingredient Row ════════════════════════ */
 
 const IngredientRow: React.FC<{ ingredient: IngredientAnalysis }> = ({ ingredient }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const getStatusBadge = (s: SafetyStatus) => {
+  const getStatusColor = (s: SafetyStatus) => {
     switch (s) {
-      case SafetyStatus.SAFE: return 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800';
-      case SafetyStatus.CAUTION: return 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800';
-      case SafetyStatus.UNSAFE: return 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800';
-      default: return 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700';
+      case SafetyStatus.SAFE: return { dot: '#6B8F71', text: 'text-[#6B8F71] dark:text-emerald-400', bg: 'bg-[#6B8F71]/8 dark:bg-emerald-900/20' };
+      case SafetyStatus.CAUTION: return { dot: '#D4A843', text: 'text-[#D4A843] dark:text-amber-400', bg: 'bg-[#D4A843]/8 dark:bg-amber-900/20' };
+      case SafetyStatus.UNSAFE: return { dot: '#C75050', text: 'text-[#C75050] dark:text-rose-400', bg: 'bg-[#C75050]/8 dark:bg-rose-900/20' };
+      default: return { dot: '#8B8B8B', text: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800/20' };
     }
   };
 
+  const statusColor = getStatusColor(ingredient.status);
+
   return (
-    <div className={`transition-all duration-200 ${expanded ? 'bg-surface-container dark:bg-dark-surface-container' : 'hover:bg-surface/80 dark:hover:bg-dark-surface-dim'}`}>
-      <div onClick={() => setExpanded(!expanded)} className="flex items-center justify-between p-6 cursor-pointer">
-        <div className="flex flex-col">
-          <span className="text-base font-semibold text-on-surface dark:text-dark-text">{ingredient.commonName}</span>
-          <span className="text-[10px] text-on-surface-variant dark:text-dark-text-secondary font-mono mt-0.5">{ingredient.name}</span>
+    <div className={`transition-all duration-200 ${expanded ? 'bg-surface-container/50 dark:bg-dark-surface-container/50' : ''}`}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-surface-container/30 dark:hover:bg-dark-surface-dim/30 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor.dot }} />
+          <div>
+            <span className="text-sm font-medium text-on-surface dark:text-dark-text">{ingredient.commonName}</span>
+            <span className="text-[10px] text-on-surface-variant dark:text-dark-text-secondary font-mono ml-2">{ingredient.name}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <span className={`px-3 py-1 rounded-lg text-[10px] font-semibold border uppercase tracking-tight ${getStatusBadge(ingredient.status)}`}>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-md text-[10px] font-semibold uppercase tracking-tight ${statusColor.text} ${statusColor.bg}`}>
             {ingredient.status}
           </span>
-          <div className={`w-8 h-8 rounded-full bg-surface-container dark:bg-dark-surface-container flex items-center justify-center transition-transform ${expanded ? 'rotate-180' : ''}`}>
-            <ChevronDown className="w-4 h-4 text-on-surface-variant dark:text-dark-text-secondary" />
-          </div>
+          <ChevronDown className={`w-4 h-4 text-on-surface-variant/40 dark:text-dark-text-secondary/40 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {expanded && (
-        <div className="px-6 pb-6 animate-fade-in">
-          <div className="p-6 bg-white dark:bg-dark-surface rounded-2xl border border-outline-variant dark:border-dark-border">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-widest mb-2 block">About</label>
-                <p className="text-on-surface dark:text-dark-text text-sm leading-relaxed">{ingredient.description}</p>
-              </div>
-              <div>
-                <label className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-widest mb-2 block">Rationale</label>
-                <p className={`font-medium text-sm leading-relaxed ${ingredient.status === SafetyStatus.SAFE ? 'text-emerald-700 dark:text-emerald-400' : ingredient.status === SafetyStatus.UNSAFE ? 'text-rose-700 dark:text-rose-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                  {ingredient.reason}
-                </p>
-              </div>
+        <div className="px-6 pb-5 animate-fade-in">
+          <div className="ml-5 pl-6 border-l border-outline-variant/40 dark:border-dark-border space-y-3">
+            <div>
+              <p className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-wider mb-1">About</p>
+              <p className="text-sm text-on-surface dark:text-dark-text leading-relaxed">{ingredient.description}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold text-on-surface-variant dark:text-dark-text-secondary uppercase tracking-wider mb-1">Rationale</p>
+              <p className={`text-sm leading-relaxed font-medium ${statusColor.text}`}>
+                {ingredient.reason}
+              </p>
             </div>
           </div>
         </div>
