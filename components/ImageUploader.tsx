@@ -1,11 +1,11 @@
 
 import React, { useRef, useState } from 'react';
-import { Camera, Image as ImageIcon, Loader2, Sparkles, MoveLeft } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader2, Sparkles, MoveLeft, ScanLine, UtensilsCrossed } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ImageUploaderProps {
   selectedProfile: UserProfile;
-  onUpload: (file: File) => void;
+  onUpload: (file: File, scanMode: 'label' | 'food') => void;
   onBack: () => void;
   loading: boolean;
 }
@@ -13,10 +13,11 @@ interface ImageUploaderProps {
 const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload, onBack, loading }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [scanMode, setScanMode] = useState<'label' | 'food'>('label');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      onUpload(e.target.files[0]);
+      onUpload(e.target.files[0], scanMode);
     }
   };
 
@@ -31,7 +32,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onUpload(e.dataTransfer.files[0]);
+      onUpload(e.dataTransfer.files[0], scanMode);
     }
   };
 
@@ -72,9 +73,31 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
               <Sparkles className="w-3 h-3" /> Nutritional Intelligence
             </div>
 
-            <h1 className="text-2xl font-bold text-on-surface dark:text-dark-text tracking-tight leading-tight mb-6">
+            <h1 className="text-2xl font-bold text-on-surface dark:text-dark-text tracking-tight leading-tight mb-5">
               Analyzing: <br /><span className="text-primary dark:text-dark-primary">{selectedProfile.name}</span>
             </h1>
+
+            {/* Scan Mode Toggle */}
+            <div className="flex bg-surface-container dark:bg-dark-surface-container rounded-xl p-1 mb-6">
+              <button
+                onClick={() => setScanMode('label')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${scanMode === 'label'
+                    ? 'bg-white dark:bg-dark-surface shadow-sm text-on-surface dark:text-dark-text'
+                    : 'text-on-surface-variant dark:text-dark-text-secondary hover:text-on-surface dark:hover:text-dark-text'
+                  }`}
+              >
+                <ScanLine className="w-3.5 h-3.5" /> Label Scan
+              </button>
+              <button
+                onClick={() => setScanMode('food')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${scanMode === 'food'
+                    ? 'bg-white dark:bg-dark-surface shadow-sm text-on-surface dark:text-dark-text'
+                    : 'text-on-surface-variant dark:text-dark-text-secondary hover:text-on-surface dark:hover:text-dark-text'
+                  }`}
+              >
+                <UtensilsCrossed className="w-3.5 h-3.5" /> Food Scan
+              </button>
+            </div>
 
             <div
               className={`bg-white dark:bg-dark-surface-container p-1.5 rounded-2xl border transition-all duration-300 ${dragActive ? 'scale-[1.02] border-primary dark:border-dark-primary shadow-elevation-3' : 'border-outline-variant dark:border-dark-border shadow-elevation-1 dark:shadow-dark-elevation-1'
@@ -98,9 +121,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedProfile, onUpload
                       </div>
                     </div>
 
-                    <h3 className="text-base font-bold text-on-surface dark:text-dark-text mb-1">Upload Product Label</h3>
+                    <h3 className="text-base font-bold text-on-surface dark:text-dark-text mb-1">
+                      {scanMode === 'label' ? 'Upload Product Label' : 'Upload Food Photo'}
+                    </h3>
                     <p className="text-on-surface-variant dark:text-dark-text-secondary text-xs mb-8 max-w-[200px] leading-relaxed mx-auto">
-                      Snap a clear photo of the ingredients or nutrition panel.
+                      {scanMode === 'label'
+                        ? 'Snap a clear photo of the ingredients or nutrition panel.'
+                        : 'Take a photo of your meal, plate, or snack.'}
                     </p>
 
                     <button

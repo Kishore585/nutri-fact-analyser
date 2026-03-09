@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ScanResult, SafetyStatus } from "../types";
+import { ScanResult, FoodScanResult, SafetyStatus } from "../types";
 
 /**
  * Helper to convert File to Base64 data part for Gemini API.
@@ -152,5 +152,132 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
   } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
     throw new Error(error.message || "Failed to analyze image. Please try again.");
+  }
+};
+
+/**
+ * Analyzes a food photo (plate, dish, snack) for calorie estimation and safety.
+ */
+export const analyzeFoodImage = async (imageFile: File, baseProfileContext: string, customConditions?: string): Promise<FoodScanResult> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const imagePart = await fileToGenerativePart(imageFile);
+
+  const prompt = `
+    Analyze this food photo. This is NOT a nutrition label — it is an actual photo of food (a plate, dish, snack, or meal).
+    
+    User Profile Configuration:
+    1. Base Health Goal: "${baseProfileContext}"
+    2. STRICT PERSONAL CONDITIONS: "${customConditions || 'None'}"
+    
+    Instructions:
+    1. Identify ALL visible food items in the image (e.g., "Grilled Chicken Breast", "Steamed Rice", "Mixed Salad").
+    2. For EACH food item, estimate:
+       - Approximate calories (based on a typical serving visible in the image)
+       - Approximate protein, carbs, and fat (in grams, e.g., "25g")
+       - Safety status (SAFE/CAUTION/UNSAFE) based on the user's health goal and conditions
+       - Brief reason for the status
+    3. Calculate TOTAL estimated calories for the entire meal/plate.
+    4. Provide an overall verdict (SAFE/CAUTION/UNSAFE).
+    5. Write a friendly 2-3 sentence summary about this meal for the user's specific health goal.
+    6. List key nutritional highlights.
+    
+    CONSUMPTION GUIDANCE:
+    7. Provide consumption advice based on the food type:
+       - For home-cooked or healthy meals: type "recipe", give tips to make it even healthier, with YouTube search queries
+       - For junk/fast food: type "moderation", advise on limiting consumption
+       - For snacks/portions: type "portion", give ideal portion size
+    
+    Be realistic with calorie estimates based on visible portion sizes.
+    Return the response in strict JSON format.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [imagePart, { text: prompt }],
+      },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            verdict: {
+              type: Type.STRING,
+              enum: [SafetyStatus.SAFE, SafetyStatus.CAUTION, SafetyStatus.UNSAFE, SafetyStatus.UNKNOWN],
+              description: "Overall safety verdict for this meal."
+            },
+            summary: {
+              type: Type.STRING,
+              description: "A friendly summary of the meal analysis (2-3 sentences)."
+            },
+            totalCalories: {
+              type: Type.NUMBER,
+              description: "Total estimated calories for the entire meal/plate."
+            },
+            nutritionalHighlights: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Key nutritional facts (e.g., 'High in Protein', 'Low Carb')."
+            },
+            foodItems: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: "Name of the food item." },
+                  estimatedCalories: { type: Type.NUMBER, description: "Estimated calories for this item." },
+                  protein: { type: Type.STRING, description: "Estimated protein (e.g., '25g')." },
+                  carbs: { type: Type.STRING, description: "Estimated carbs (e.g., '30g')." },
+                  fat: { type: Type.STRING, description: "Estimated fat (e.g., '10g')." },
+                  status: {
+                    type: Type.STRING,
+                    enum: [SafetyStatus.SAFE, SafetyStatus.CAUTION, SafetyStatus.UNSAFE, SafetyStatus.UNKNOWN]
+                  },
+                  reason: { type: Type.STRING, description: "Why this status for the user's profile." }
+                },
+                required: ["name", "estimatedCalories", "protein", "carbs", "fat", "status", "reason"]
+              }
+            },
+            consumptionGuidance: {
+              type: Type.OBJECT,
+              description: "How to best consume this meal.",
+              properties: {
+                type: {
+                  type: Type.STRING,
+                  enum: ['recipe', 'moderation', 'portion'],
+                },
+                title: { type: Type.STRING },
+                advice: { type: Type.STRING },
+                recipes: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      name: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      youtubeSearchQuery: { type: Type.STRING }
+                    },
+                    required: ["name", "description", "youtubeSearchQuery"]
+                  }
+                },
+                dailyAmount: { type: Type.STRING }
+              },
+              required: ["type", "title", "advice"]
+            }
+          },
+          required: ["verdict", "summary", "totalCalories", "foodItems", "nutritionalHighlights", "consumptionGuidance"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No response from AI");
+
+    return JSON.parse(text.trim()) as FoodScanResult;
+
+  } catch (error: any) {
+    console.error("Gemini Food Analysis Error:", error);
+    throw new Error(error.message || "Failed to analyze food image. Please try again.");
   }
 };

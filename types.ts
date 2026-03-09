@@ -36,11 +36,32 @@ export interface ScanResult {
   consumptionGuidance?: ConsumptionGuidance;
 }
 
+export interface FoodItem {
+  name: string;
+  estimatedCalories: number;
+  protein: string;
+  carbs: string;
+  fat: string;
+  status: SafetyStatus;
+  reason: string;
+}
+
+export interface FoodScanResult {
+  verdict: SafetyStatus;
+  summary: string;
+  totalCalories: number;
+  foodItems: FoodItem[];
+  nutritionalHighlights: string[];
+  consumptionGuidance?: ConsumptionGuidance;
+}
+
 export interface HistoryItem extends ScanResult {
   id: string;
   timestamp: number;
   profileId: string;
   profileName: string;
+  scanMode?: 'label' | 'food';
+  foodScanData?: FoodScanResult;
 }
 
 export interface UserPreferences {
@@ -71,4 +92,4 @@ export interface User {
   preferences?: UserPreferences;
 }
 
-export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'ACCOUNT_SETTINGS' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'HISTORY' | 'ARCHITECTURE' | 'REPORT' | 'PROJECT_DOC';
+export type AppState = 'AUTH' | 'PROFILE_EDITOR' | 'ACCOUNT_SETTINGS' | 'UPLOAD' | 'ANALYZING' | 'RESULTS' | 'FOOD_RESULTS' | 'HISTORY' | 'ARCHITECTURE' | 'REPORT' | 'PROJECT_DOC';

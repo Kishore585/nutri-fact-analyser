@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile, AppState, ScanResult, User, HistoryItem } from './types';
+import { UserProfile, AppState, ScanResult, FoodScanResult, User, HistoryItem } from './types';
 import ImageUploader from './components/ImageUploader';
 import AnalysisView from './components/AnalysisView';
+import FoodScanView from './components/FoodScanView';
 import AuthScreen from './components/AuthScreen';
 import HistoryView from './components/HistoryView';
 import UserProfileEditor from './components/UserProfileEditor';
 import AccountSettingsView from './components/AccountSettingsView';
 import ProductReport from './components/ProductReport';
-import { analyzeImage } from './services/geminiService';
+import { analyzeImage, analyzeFoodImage } from './services/geminiService';
 import { storageService } from './services/storageService';
 import { PROFILES } from './constants';
 import { ShieldCheck, History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize, Sun, Moon } from 'lucide-react';
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>('AUTH');
   const [user, setUser] = useState<User | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [foodResult, setFoodResult] = useState<FoodScanResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -38,6 +40,12 @@ const App: React.FC = () => {
   }, [isDark]);
 
   const toggleDarkMode = () => setIsDark(prev => !prev);
+
+  // Apply color theme from user preferences
+  useEffect(() => {
+    const theme = user?.preferences?.theme || 'emerald';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [user?.preferences?.theme]);
 
   const getProfileObject = (id?: string) => PROFILES.find(p => p.id === id) || PROFILES[0];
 
@@ -119,21 +127,35 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, scanMode: 'label' | 'food' = 'label') => {
     if (!user) return;
     setScanning(true);
     setError(null);
     const baseProfile = getProfileObject(user.preferences?.baseProfileId);
     try {
-      const analysisData = await analyzeImage(file, baseProfile.promptContext, user.preferences?.customConditions);
-      setResult(analysisData);
-
-      await storageService.saveScan(user.id, analysisData, baseProfile);
-
-      const updatedHistory = await storageService.getHistory(user.id);
-      setHistory(updatedHistory);
-
-      setState('RESULTS');
+      if (scanMode === 'food') {
+        const foodData = await analyzeFoodImage(file, baseProfile.promptContext, user.preferences?.customConditions);
+        setFoodResult(foodData);
+        // Save as a label-compatible history item
+        const historyCompatible: ScanResult = {
+          verdict: foodData.verdict,
+          summary: foodData.summary,
+          ingredients: [],
+          nutritionalHighlights: foodData.nutritionalHighlights,
+          consumptionGuidance: foodData.consumptionGuidance,
+        };
+        await storageService.saveScan(user.id, historyCompatible, baseProfile);
+        const updatedHistory = await storageService.getHistory(user.id);
+        setHistory(updatedHistory);
+        setState('FOOD_RESULTS');
+      } else {
+        const analysisData = await analyzeImage(file, baseProfile.promptContext, user.preferences?.customConditions);
+        setResult(analysisData);
+        await storageService.saveScan(user.id, analysisData, baseProfile);
+        const updatedHistory = await storageService.getHistory(user.id);
+        setHistory(updatedHistory);
+        setState('RESULTS');
+      }
     } catch (err: any) {
       setError(err.message || "Failed to process image.");
     } finally {
@@ -143,6 +165,7 @@ const App: React.FC = () => {
 
   const reset = () => {
     setResult(null);
+    setFoodResult(null);
     setError(null);
     setState('UPLOAD');
   };
@@ -228,6 +251,7 @@ const App: React.FC = () => {
           {state === 'ACCOUNT_SETTINGS' && user && <AccountSettingsView user={user} onSave={handleAccountUpdate} onBack={() => setState('UPLOAD')} />}
           {state === 'UPLOAD' && user && <ImageUploader selectedProfile={activeProfile} onUpload={handleFileUpload} onBack={() => setState('PROFILE_EDITOR')} loading={scanning} />}
           {state === 'RESULTS' && result && <AnalysisView result={result} onViewReport={() => setState('REPORT')} userProfileName={(result as HistoryItem).profileName || activeProfile.name} onReset={reset} />}
+          {state === 'FOOD_RESULTS' && foodResult && <FoodScanView result={foodResult} onReset={reset} userProfileName={activeProfile.name} />}
           {state === 'REPORT' && result && user && <ProductReport result={result} profileName={(result as HistoryItem).profileName || activeProfile.name} userName={user.name} onBack={() => setState('RESULTS')} />}
           {state === 'HISTORY' && <HistoryView history={history} onDelete={handleDeleteHistoryItem} onSelect={(item) => { setResult(item); setState('RESULTS'); }} onBack={reset} />}
         </div>

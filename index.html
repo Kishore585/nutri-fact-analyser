@@ -28,10 +28,10 @@
               'container-high': '#EEEDEA',
             },
             primary: {
-              DEFAULT: '#1A6B52',
-              container: '#D6F5E6',
-              'on-container': '#0D3B2D',
-              light: '#E8F5ED',
+              DEFAULT: 'var(--color-primary)',
+              container: 'var(--color-primary-container)',
+              'on-container': 'var(--color-primary-on-container)',
+              light: 'var(--color-primary-light)',
             },
             on: {
               surface: '#1C1B1A',
@@ -58,9 +58,9 @@
               'border-variant': '#2A2A2A',
               text: '#E8E6E3',
               'text-secondary': '#9A9896',
-              'primary': '#4ADE9C',
-              'primary-container': '#0D3B2D',
-              'primary-light': '#1A3D2E',
+              'primary': 'var(--color-dark-primary)',
+              'primary-container': 'var(--color-dark-primary-container)',
+              'primary-light': 'var(--color-dark-primary-light)',
             }
           },
           borderRadius: {
@@ -102,6 +102,64 @@
     }
   </script>
   <style>
+    /* ═══ Theme Variables ═══ */
+    :root,
+    [data-theme="emerald"] {
+      --color-primary: #1A6B52;
+      --color-primary-container: #D6F5E6;
+      --color-primary-on-container: #0D3B2D;
+      --color-primary-light: #E8F5ED;
+      --color-dark-primary: #4ADE9C;
+      --color-dark-primary-container: #0D3B2D;
+      --color-dark-primary-light: #1A3D2E;
+      --color-ambient-1: rgba(214, 245, 230, 0.25);
+      --color-ambient-2: rgba(232, 245, 237, 0.2);
+      --color-dark-ambient-1: rgba(74, 222, 156, 0.06);
+      --color-dark-ambient-2: rgba(74, 222, 156, 0.04);
+    }
+
+    [data-theme="indigo"] {
+      --color-primary: #4F46E5;
+      --color-primary-container: #E0E7FF;
+      --color-primary-on-container: #312E81;
+      --color-primary-light: #EEF2FF;
+      --color-dark-primary: #818CF8;
+      --color-dark-primary-container: #312E81;
+      --color-dark-primary-light: #1E1B4B;
+      --color-ambient-1: rgba(224, 231, 255, 0.25);
+      --color-ambient-2: rgba(238, 242, 255, 0.2);
+      --color-dark-ambient-1: rgba(129, 140, 248, 0.06);
+      --color-dark-ambient-2: rgba(129, 140, 248, 0.04);
+    }
+
+    [data-theme="slate"] {
+      --color-primary: #334155;
+      --color-primary-container: #E2E8F0;
+      --color-primary-on-container: #0F172A;
+      --color-primary-light: #F1F5F9;
+      --color-dark-primary: #94A3B8;
+      --color-dark-primary-container: #1E293B;
+      --color-dark-primary-light: #0F172A;
+      --color-ambient-1: rgba(226, 232, 240, 0.25);
+      --color-ambient-2: rgba(241, 245, 249, 0.2);
+      --color-dark-ambient-1: rgba(148, 163, 184, 0.06);
+      --color-dark-ambient-2: rgba(148, 163, 184, 0.04);
+    }
+
+    [data-theme="rose"] {
+      --color-primary: #E11D48;
+      --color-primary-container: #FFE4E6;
+      --color-primary-on-container: #881337;
+      --color-primary-light: #FFF1F2;
+      --color-dark-primary: #FB7185;
+      --color-dark-primary-container: #881337;
+      --color-dark-primary-light: #4C0519;
+      --color-ambient-1: rgba(255, 228, 230, 0.25);
+      --color-ambient-2: rgba(255, 241, 242, 0.2);
+      --color-dark-ambient-1: rgba(251, 113, 133, 0.06);
+      --color-dark-ambient-2: rgba(251, 113, 133, 0.04);
+    }
+
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: #FAFAF8;
@@ -136,16 +194,16 @@
       height: 100%;
       z-index: -1;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(214, 245, 230, 0.25) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, rgba(232, 245, 237, 0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 0%, var(--color-ambient-1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, var(--color-ambient-2) 0%, transparent 50%),
         #FAFAF8;
       transition: background 0.3s ease;
     }
 
     html.dark .ambient-bg {
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(74, 222, 156, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, rgba(74, 222, 156, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 0%, var(--color-dark-ambient-1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, var(--color-dark-ambient-2) 0%, transparent 50%),
         #0F0F0F;
     }
 
