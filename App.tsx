@@ -12,7 +12,7 @@ import ProductReport from './components/ProductReport';
 import { analyzeImage, analyzeFoodImage } from './services/geminiService';
 import { storageService } from './services/storageService';
 import { PROFILES } from './constants';
-import { ShieldCheck, History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize, Sun, Moon } from 'lucide-react';
+import { History, LogOut, Settings, Loader2, User as UserIcon, Maximize, Minimize, Sun, Moon } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>('AUTH');
@@ -135,6 +135,10 @@ const App: React.FC = () => {
     try {
       if (scanMode === 'food') {
         const foodData = await analyzeFoodImage(file, baseProfile.promptContext, user.preferences?.customConditions);
+        if (foodData.isFoodImage === false) {
+          setError("No food detected in this image. Please upload a photo of actual food (a plate, dish, meal, or snack).");
+          return;
+        }
         setFoodResult(foodData);
         // Save as a label-compatible history item
         const historyCompatible: ScanResult = {
@@ -150,6 +154,10 @@ const App: React.FC = () => {
         setState('FOOD_RESULTS');
       } else {
         const analysisData = await analyzeImage(file, baseProfile.promptContext, user.preferences?.customConditions);
+        if (analysisData.isNutritionLabel === false) {
+          setError("No nutrition label or ingredient list found in this image. Please upload a clear photo of a food product label.");
+          return;
+        }
         setResult(analysisData);
         await storageService.saveScan(user.id, analysisData, baseProfile);
         const updatedHistory = await storageService.getHistory(user.id);
@@ -187,13 +195,18 @@ const App: React.FC = () => {
         <div className="max-w-[1400px] mx-auto h-16 bg-white/80 dark:bg-dark-surface/90 backdrop-blur-xl rounded-2xl px-6 flex items-center justify-between border border-outline-variant dark:border-dark-border shadow-elevation-1 dark:shadow-dark-elevation-1 transition-colors">
           <button
             onClick={() => user ? reset() : null}
-            className="flex items-center gap-3 group disabled:opacity-50"
+            className="flex items-center gap-2.5 group disabled:opacity-50"
             disabled={state === 'AUTH'}
           >
             <div className="bg-primary p-2 rounded-xl text-white group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-4 h-4" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z" />
+                <path d="M12 6c-2 2-3 4.5-3 6.5 0 2.5 1.5 4 3 4.5" />
+                <path d="M12 6c2 2 3 4.5 3 6.5 0 2.5-1.5 4-3 4.5" />
+                <line x1="12" y1="2" x2="12" y2="6" />
+              </svg>
             </div>
-            <span className="font-bold text-base tracking-tight text-on-surface dark:text-dark-text">NutriScan<span className="text-primary dark:text-dark-primary">AI</span></span>
+            <span className="font-bold text-base tracking-tight text-on-surface dark:text-dark-text">Nutri<span className="text-primary dark:text-dark-primary">AI</span></span>
           </button>
 
           <div className="flex items-center gap-1">
@@ -257,13 +270,15 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className="px-4 md:px-6 pb-8 print:hidden">
-        <div className="max-w-3xl mx-auto text-center py-4">
-          <p className="text-xs text-on-surface-variant/60 dark:text-dark-text-secondary/60 font-medium tracking-wide">
-            © {new Date().getFullYear()} NutriScan AI · Nutritional Intelligence
-          </p>
-        </div>
-      </footer>
+      {state !== 'PROFILE_EDITOR' && (
+        <footer className="px-4 md:px-6 pb-4 print:hidden">
+          <div className="max-w-3xl mx-auto text-center py-3">
+            <p className="text-xs text-on-surface-variant/60 dark:text-dark-text-secondary/60 font-medium tracking-wide">
+              © {new Date().getFullYear()} NutriAI · Nutritional Intelligence
+            </p>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

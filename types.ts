@@ -34,6 +34,7 @@ export interface ScanResult {
   ingredients: IngredientAnalysis[];
   nutritionalHighlights: string[];
   consumptionGuidance?: ConsumptionGuidance;
+  isNutritionLabel?: boolean;
 }
 
 export interface FoodItem {
@@ -53,6 +54,7 @@ export interface FoodScanResult {
   foodItems: FoodItem[];
   nutritionalHighlights: string[];
   consumptionGuidance?: ConsumptionGuidance;
+  isFoodImage?: boolean;
 }
 
 export interface HistoryItem extends ScanResult {

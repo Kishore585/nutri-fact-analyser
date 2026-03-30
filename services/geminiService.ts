@@ -32,6 +32,11 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
   const prompt = `
     Analyze this food label image (nutrition facts or ingredient list).
     
+    IMPORTANT IMAGE VALIDATION:
+    First, determine if this image actually contains a nutrition label, ingredient list, or food product packaging.
+    If the image does NOT contain any nutrition label, ingredient list, or food product packaging, set "isNutritionLabel" to false.
+    If it DOES contain a nutrition label or ingredient list, set "isNutritionLabel" to true and proceed with the analysis.
+    
     User Profile Configuration:
     1. Base Health Goal: "${baseProfileContext}"
     2. STRICT PERSONAL CONDITIONS (These override everything): "${customConditions || 'None'}"
@@ -43,18 +48,23 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
     4. Translate complex chemical names into common names.
     5. Explain *why* an ingredient is good or bad for this specific user.
     
-    CONSUMPTION GUIDANCE INSTRUCTIONS:
-    6. Based on the product type and the user's health goal, provide consumption guidance:
+    CONSUMPTION GUIDANCE INSTRUCTIONS (MANDATORY — you MUST always provide detailed guidance):
+    6. Based on the product type and the user's health goal, you MUST provide consumption guidance. This section is REQUIRED and must be thorough:
        - For RAW/COOKABLE food items (like paneer, chicken, vegetables, eggs, tofu, fish, lentils, rice etc.):
-         Set type to "recipe". Provide 2-3 healthy recipes specifically tailored to the user's health goal.
-         Each recipe should have a descriptive name, a brief description of how to prepare it,
-         and a YouTube search query that would find a relevant cooking video (e.g., "paneer tikka high protein muscle building recipe").
+         Set type to "recipe". You MUST provide exactly 2-3 healthy recipes specifically tailored to the user's health goal.
+         Each recipe MUST have:
+           * A specific, descriptive name (e.g., "High-Protein Grilled Paneer Tikka" not just "Paneer Tikka")
+           * A detailed description with key ingredients and step-by-step preparation method (at least 2-3 sentences)
+           * A YouTube search query that would find a relevant cooking video (e.g., "paneer tikka high protein muscle building recipe")
+         The recipes array MUST contain 2-3 recipe objects. Do NOT leave it empty.
        - For PACKAGED/PROCESSED JUNK food items (like chips, candies, sodas, instant noodles, cookies etc.):
-         Set type to "moderation". Provide advice on why minimal consumption is better and suggest healthier alternatives.
+         Set type to "moderation". Provide detailed advice on why minimal consumption is better, the specific health risks,
+         and suggest 2-3 specific healthier alternatives the user could try instead.
        - For HEALTHY SNACKS/DRY FRUITS (like almonds, walnuts, dates, seeds, dark chocolate, dried berries etc.):
-         Set type to "portion". Provide the recommended daily consumption amount (e.g., "5-6 almonds per day")
-         and explain the nutritional benefit for the user's specific health goal.
-    7. The consumptionGuidance title should be specific to the product and health goal.
+         Set type to "portion". Provide the exact recommended daily consumption amount (e.g., "5-6 almonds per day")
+         and explain the specific nutritional benefit for the user's health goal.
+    7. The consumptionGuidance title MUST be specific to the product and health goal (e.g., "Paneer Recipes for Muscle Building" not just "Recipes").
+    8. The advice field MUST contain a detailed paragraph explaining how to best consume this product for the user's specific health goal.
     
     Return the response in strict JSON format.
   `;
@@ -66,6 +76,7 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
         parts: [imagePart, { text: prompt }],
       },
       config: {
+        temperature: 0,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -136,10 +147,14 @@ export const analyzeImage = async (imageFile: File, baseProfileContext: string, 
                   description: "Recommended daily consumption amount (only for type 'portion', e.g., '5-6 almonds per day')."
                 }
               },
-              required: ["type", "title", "advice"]
+              required: ["type", "title", "advice", "recipes"]
+            },
+            isNutritionLabel: {
+              type: Type.BOOLEAN,
+              description: "Set to true if the image contains a nutrition label or ingredient list. Set to false if it does not."
             }
           },
-          required: ["verdict", "summary", "ingredients", "nutritionalHighlights", "consumptionGuidance"]
+          required: ["verdict", "summary", "ingredients", "nutritionalHighlights", "consumptionGuidance", "isNutritionLabel"]
         }
       }
     });
@@ -165,6 +180,11 @@ export const analyzeFoodImage = async (imageFile: File, baseProfileContext: stri
   const prompt = `
     Analyze this food photo. This is NOT a nutrition label — it is an actual photo of food (a plate, dish, snack, or meal).
     
+    IMPORTANT IMAGE VALIDATION:
+    First, determine if this image actually contains visible food (a plate, dish, meal, snack, fruit, etc.).
+    If the image does NOT contain any food items, set "isFoodImage" to false.
+    If it DOES contain food, set "isFoodImage" to true and proceed with the full analysis.
+    
     User Profile Configuration:
     1. Base Health Goal: "${baseProfileContext}"
     2. STRICT PERSONAL CONDITIONS: "${customConditions || 'None'}"
@@ -181,11 +201,23 @@ export const analyzeFoodImage = async (imageFile: File, baseProfileContext: stri
     5. Write a friendly 2-3 sentence summary about this meal for the user's specific health goal.
     6. List key nutritional highlights.
     
-    CONSUMPTION GUIDANCE:
-    7. Provide consumption advice based on the food type:
-       - For home-cooked or healthy meals: type "recipe", give tips to make it even healthier, with YouTube search queries
-       - For junk/fast food: type "moderation", advise on limiting consumption
-       - For snacks/portions: type "portion", give ideal portion size
+    IMPORTANT — CALORIE ESTIMATION RULES:
+    - Use standard USDA nutritional databases as reference for calorie values.
+    - Estimate portion sizes carefully from the image and calculate calories based on those portions.
+    - Be precise and consistent: the same food in the same quantity should always yield the same calorie estimate.
+    - Round calorie values to the nearest 5 kcal for individual items.
+    
+    CONSUMPTION GUIDANCE (MANDATORY — you MUST always provide detailed guidance):
+    7. You MUST provide consumption advice based on the food type. This section is REQUIRED:
+       - For home-cooked or healthy meals: Set type to "recipe". You MUST provide exactly 2-3 recipes with:
+         * A specific, descriptive name (e.g., "Low-Calorie Mediterranean Grilled Chicken" not just "Grilled Chicken")
+         * A detailed description with key ingredients and step-by-step preparation (at least 2-3 sentences)
+         * A YouTube search query to find a relevant cooking video
+         The recipes array MUST contain 2-3 recipe objects. Do NOT leave it empty.
+       - For junk/fast food: Set type to "moderation". Provide detailed advice on health risks and suggest 2-3 specific healthier alternatives.
+       - For snacks/portions: Set type to "portion". Give the exact ideal portion size and explain nutritional benefits.
+    8. The title MUST be specific to the meal and health goal (e.g., "Healthier Variations of Your Chicken Rice Bowl" not just "Tips").
+    9. The advice field MUST contain a detailed paragraph on how to best consume this meal for the user's health goal.
     
     Be realistic with calorie estimates based on visible portion sizes.
     Return the response in strict JSON format.
@@ -198,6 +230,7 @@ export const analyzeFoodImage = async (imageFile: File, baseProfileContext: stri
         parts: [imagePart, { text: prompt }],
       },
       config: {
+        temperature: 0,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -263,10 +296,14 @@ export const analyzeFoodImage = async (imageFile: File, baseProfileContext: stri
                 },
                 dailyAmount: { type: Type.STRING }
               },
-              required: ["type", "title", "advice"]
+              required: ["type", "title", "advice", "recipes"]
+            },
+            isFoodImage: {
+              type: Type.BOOLEAN,
+              description: "Set to true if the image contains visible food. Set to false if it does not contain any food."
             }
           },
-          required: ["verdict", "summary", "totalCalories", "foodItems", "nutritionalHighlights", "consumptionGuidance"]
+          required: ["verdict", "summary", "totalCalories", "foodItems", "nutritionalHighlights", "consumptionGuidance", "isFoodImage"]
         }
       }
     });
