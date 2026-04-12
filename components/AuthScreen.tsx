@@ -74,8 +74,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-on-surface dark:text-dark-text mb-1 tracking-tight">NutriAI</h1>
-        <p className="text-on-surface-variant dark:text-dark-text-secondary text-sm mb-8">Your Health Profile, Locally Stored.</p>
+        <h1 className="text-2xl font-bold text-on-surface dark:text-dark-text mb-8 tracking-tight">NutriAI</h1>
 
         <form onSubmit={handleAuth} className="space-y-4">
 
