@@ -78,10 +78,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         <p className="text-on-surface-variant dark:text-dark-text-secondary text-sm mb-8">Your Health Profile, Locally Stored.</p>
 
         <form onSubmit={handleAuth} className="space-y-4">
-          <div className="bg-primary-light dark:bg-dark-primary-light text-primary dark:text-dark-primary text-[11px] font-semibold uppercase tracking-widest p-3 rounded-xl flex items-center justify-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-dark-primary"></div>
-            Supabase Account Mode
-          </div>
+
 
           {authError && (
             <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm font-medium animate-fade-in">
