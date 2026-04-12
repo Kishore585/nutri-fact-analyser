@@ -1,0 +1,297 @@
+==================================================
+1. LOGIN PAGE (login.html)
+==================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriFact Analyser - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>NutriFact Analyser</h2>
+        <form id="loginForm" action="/login" method="POST">
+            <input type="email" id="email" placeholder="Enter Email" required />
+            <input type="password" id="password" placeholder="Enter Password" required />
+            <button type="submit" class="primary-btn">Sign In</button>
+            <p class="error-msg" id="errorMsg"></p>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+==================================================
+2. DASHBOARD PAGE (dashboard.html)
+==================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NutriFact - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Welcome to NutriFact Dashboard</h1>
+        <button id="logoutBtn" class="logout">Logout</button>
+    </nav>
+    <div class="dashboard-module">
+        <div class="card">
+            <h3>Analyze Label</h3>
+            <p>Upload a food label to extract ingredients and risks.</p>
+            <button onclick="location.href='analysis.html'">Start Scan</button>
+        </div>
+        <div class="card">
+            <h3>Food Scan</h3>
+            <p>Take a picture of your meal for calorie estimation.</p>
+            <button onclick="location.href='foodscan.html'">Open Camera</button>
+        </div>
+        <div class="card">
+            <h3>History</h3>
+            <p>View past tracked meals and downloaded prints.</p>
+            <button onclick="location.href='history.html'">View Records</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+==================================================
+3. CASCADING STYLE SHEET (style.css)
+==================================================
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+body {
+    background-color: #f4f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.login-container, .dashboard-module, .food-scan-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+button {
+    background: #28a745;
+    color: white;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+button:hover {
+    background: #218838;
+}
+.dashboard-module {
+    display: flex;
+    gap: 20px;
+}
+.card {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #fafafa;
+}
+.navbar {
+    position: absolute;
+    top: 0; width: 100%;
+    padding: 20px; background: #fff;
+    display: flex; justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.results-box {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 5px;
+}
+
+
+==================================================
+4. JAVASCRIPT LOGIC (script.js)
+==================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("loginForm");
+    
+    if (loginForm) {
+        loginForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            
+            if (email === "student@college.edu" && password === "nutrifact2026") {
+                alert("Login Successful! Redirecting to Dashboard...");
+                window.location.href = "dashboard.html";
+            } else {
+                document.getElementById("errorMsg").innerText = "Invalid Credentials!";
+                document.getElementById("errorMsg").style.color = "red";
+            }
+        });
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            alert("Logged out successfully.");
+            window.location.href = "login.html";
+        });
+    }
+});
+
+
+==================================================
+5. FOOD SCAN VIEW (FoodScanView.tsx / React Component)
+==================================================
+import React, { useState } from 'react';
+import './style.css';
+
+const FoodScanView = () => {
+    const [image, setImage] = useState<File | null>(null);
+    const [analysisResult, setAnalysisResult] = useState<string>('');
+    const [loading, setLoading] = useState(false);
+
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setImage(event.target.files[0]);
+        }
+    };
+
+    const processFoodImage = async () => {
+        if (!image) return alert("Please upload an image first!");
+        
+        setLoading(true);
+        setTimeout(() => {
+            setAnalysisResult("Estimated Calories: 450 kcal | Flag: High Sodium Detected.");
+            setLoading(false);
+        }, 2000);
+    };
+
+    return (
+        <div className="food-scan-container">
+            <h2>Scan Your Meal</h2>
+            <p>Upload a picture of your food to analyze nutritional calories.</p>
+            
+            <input type="file" accept="image/png, image/jpeg" onChange={handleImageUpload} />
+            
+            <button onClick={processFoodImage} disabled={loading}>
+                {loading ? "Analyzing Image..." : "Analyze Food"}
+            </button>
+            
+            {analysisResult && (
+                <div className="results-box">
+                    <h4>Analysis Result:</h4>
+                    <p>{analysisResult}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default FoodScanView;
+
+
+==================================================
+6. DATABASE SQL SETUP (schema.sql)
+==================================================
+CREATE DATABASE nutridb;
+USE nutridb;
+
+CREATE TABLE Users (
+  UserId INT PRIMARY KEY AUTO_INCREMENT,
+  Name VARCHAR(100),
+  Email VARCHAR(100) UNIQUE,
+  Password VARCHAR(100)
+);
+
+CREATE TABLE ScanRecords (
+  ScanId INT PRIMARY KEY AUTO_INCREMENT,
+  UserId INT,
+  ImageUrl VARCHAR(255),
+  ResultData TEXT,
+  ScanDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+INSERT INTO Users (Name, Email, Password) VALUES
+('Admin User', 'admin@nutrifact.com', 'adminpass'),
+('Student User', 'student@college.edu', 'nutrifact2026');
+
+
+==================================================
+7. JDBC LOGIN QUERY HANDLER (LoginServlet.java)
+==================================================
+import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.sql.*;
+
+public class LoginServlet extends HttpServlet {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+    response.setContentType("application/json");
+    PrintWriter out = response.getWriter();
+    
+    StringBuilder sb = new StringBuilder();
+    String line;
+    while ((line = request.getReader().readLine()) != null) {
+      sb.append(line);
+    }
+    
+    String json = sb.toString();
+    String email = json.split("\"email\":\"")[1].split("\"")[0];
+    String password = json.split("\"password\":\"")[1].split("\"")[0];
+    
+    boolean success = false;
+    String msg = "";
+    
+    try {
+      Class.forName("com.mysql.cj.jdbc.Driver");
+      Connection conn = DriverManager.getConnection(
+        "jdbc:mysql://localhost:3306/nutridb", "root", "password");
+        
+      PreparedStatement ps = conn.prepareStatement("SELECT * FROM Users WHERE Email=? AND Password=?");
+      ps.setString(1, email);
+      ps.setString(2, password);
+      
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) {
+        success = true;
+      } else {
+        msg = "Invalid email or password!";
+      }
+      
+      rs.close();
+      ps.close();
+      conn.close();
+    } catch (Exception ex) {
+      msg = "Database error!";
+      ex.printStackTrace();
+    }
+    
+    out.print("{\"success\":" + success + ", \"message\":\"" + msg + "\"}");
+    out.flush();
+  }
+}
